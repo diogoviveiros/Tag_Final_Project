@@ -1,0 +1,3 @@
+<launch>
+  <node name="prediction" pkg="Tag_Final_Project" type="prediction.py" output="screen"/>
+</launch>
