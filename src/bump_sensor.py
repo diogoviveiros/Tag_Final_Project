@@ -34,14 +34,14 @@ class Bumper():
         print("here",sensor)
         if self.bumper_state == 1:
             print("bumper state 1")
-            self.twist.linear.x = -0.1
+            self.twist.linear.x = 0.0
         elif self.bumper_state == 2:
             print("bumper state 2")
-            self.twist.linear.x = 0.1
+            self.twist.linear.x = 0.0
 
     def bumper(self):
         rate = rospy.Rate(10)
-        self.twist.linear.x = 0.1
+        self.twist.linear.x = 0.0
         while not rospy.is_shutdown():
             self.cmd_pub.publish(self.twist)
             rate.sleep()
