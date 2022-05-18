@@ -6,6 +6,7 @@ import cv2, cv_bridge
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image
 import datetime
+from sensor_msgs.msg import LaserScan
 
 
 class Chase(object):
@@ -16,6 +17,8 @@ class Chase(object):
         # initalize the debugging window
         #cv2.namedWindow("window", 1)
 
+        rospy.Subscriber("/scan", LaserScan, self.process_scan, queue_size =1)
+
         # subscribe to the robot's RGB camera data stream
         self.image_sub = rospy.Subscriber('camera/rgb/image_raw',
                         Image, self.image_callback)
@@ -24,6 +27,11 @@ class Chase(object):
         self.cmd_pub = rospy.Publisher('cmd_vel', Twist, queue_size = 10)
         self.coordinates = []
 
+
+    def process_scan(self,data):
+        
+
+        return
     
     def image_callback(self, msg):
 
@@ -49,6 +57,9 @@ class Chase(object):
                         tot_y += corners[i][0][j][1] #y
                     cx = int(tot_x / 4)
                     cy = int(tot_y / 4)
+
+
+                    self.coordinates.append(  (cx, cy, datetime.datetime.now()) )
                     tag_found = True
                 
         # if there are any yellow pixels found
