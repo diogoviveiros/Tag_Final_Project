@@ -14,7 +14,7 @@ class Chase(object):
         self.bridge = cv_bridge.CvBridge()
         self.robot_movement_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         # initalize the debugging window
-        cv2.namedWindow("window", 1)
+        #cv2.namedWindow("window", 1)
 
         # subscribe to the robot's RGB camera data stream
         self.image_sub = rospy.Subscriber('camera/rgb/image_raw',
@@ -43,7 +43,7 @@ class Chase(object):
         tag_found = False
         if ids is not None:
             for i in range(len(ids)):
-                if ids[i][0] == self.curr_tag:
+                if ids[i][0] == 2:
                     for j in range(4):
                         tot_x += corners[i][0][j][0] #x
                         tot_y += corners[i][0][j][1] #y
@@ -66,23 +66,24 @@ class Chase(object):
             k_a = 0.5
             k_l = -0.1
             e_a = (w/2 - cx)/w
-            if (abs(e_a) > 0.01):
-                my_twist.angular.z = k_a * e_a
-            else:
-                my_twist.angular.z = 0
+            # if (abs(e_a) > 0.01):
+            #     my_twist.angular.z = k_a * e_a
+            # else:
+            #     my_twist.angular.z = 0
             
-            if self.front_dist == 0:
-                my_twist.linear.x = 0.1
-            else:
-                dx = abs(self.distance - self.front_dist)
-                if dx < self.buffer:
-                    my_twist.linear.x = 0
-                else:
-                    e_l = (self.distance - self.front_dist)/self.front_dist
-                    my_twist.linear.x = k_l * e_l
+            # if self.front_dist == 0:
+            #     my_twist.linear.x = 0.1
+            # else:
+            #     dx = abs(self.distance - self.front_dist)
+            #     if dx < self.buffer:
+            #         my_twist.linear.x = 0
+            #     else:
+            #         e_l = (self.distance - self.front_dist)/self.front_dist
+            #         my_twist.linear.x = k_l * e_l
         
         else:
-            my_twist.angular.z = 0.5
+            pass
+            #my_twist.angular.z = 0.5
 
         self.cmd_pub.publish(my_twist)
 
