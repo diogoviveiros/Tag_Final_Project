@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from ast import NameConstant
 from turtle import color, forward, update
 import rospy
@@ -30,13 +32,16 @@ class Prediction(object):
         ang = Vector3()
         self.twist = Twist(linear=lin,angular=ang)
 
+        # --- Initialize Tracking Data
+        self.runner_history = []
+
         rospy.sleep(3)
 
-def image_callback(self, img):
-    return
+    def image_callback(self, img):
+        return
 
-def scan_callback(self, data):
-    return
+    def scan_callback(self, data):
+        return
 
 
 if __name__ == "__main__":
