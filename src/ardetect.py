@@ -26,10 +26,46 @@ class Chase(object):
         
         self.cmd_pub = rospy.Publisher('cmd_vel', Twist, queue_size = 10)
         self.coordinates = []
+        self.artag_side = "none" #left, rightm or none
 
 
-    def process_scan(self,data):
+    def process_scan(self, data):
         
+        
+        if self.artag_side == "left":
+            min_distance = 10000
+            min_angle = 10000
+            for i in np.arange(309, 360, 1):
+                if data.ranges[i] < min_distance and data.ranges[i] != 0.0:
+                    min_distance =  data.ranges[i]
+                    min_angle = i
+
+            min_angle = min_angle - 360
+
+            print("ar tag is at", self.artag_side)
+            print("angle", min_angle)
+            print("distance",min_distance)
+        elif self.artag_side == "right":
+            min_distance = 10000 
+            min_angle = 10000
+            for i in np.arange(0, 52, 1):
+                if  data.ranges[i] < min_distance and data.ranges[i] != 0.0:
+                    min_distance =  data.ranges[i]
+                    min_angle = i
+
+            print("ar tag is at", self.artag_side)
+            print("angle", min_angle)
+            print("distance",min_distance)
+
+        else:
+
+            # tag is not found in camera
+            pass
+
+        
+
+        
+
 
         return
     
@@ -51,7 +87,7 @@ class Chase(object):
         tag_found = False
         if ids is not None:
             for i in range(len(ids)):
-                if ids[i][0] == 2:
+                if ids[i][0] == 2: #here is the number of AR tag
                     for j in range(4):
                         tot_x += corners[i][0][j][0] #x
                         tot_y += corners[i][0][j][1] #y
@@ -69,32 +105,15 @@ class Chase(object):
             # the center point of the yellow pixels
             # hint: if you don't see a red circle, check your bounds for what is considered 'yellow'
             cv2.circle(image, (cx, cy), 10, (0,0,255), -1)
-
-            # TODO: based on the location of the line (approximated
-            #       by the center of the yellow pixels), implement
-            #       proportional control to have the robot follow
-            #       the yellow line
-            k_a = 0.5
-            k_l = -0.1
-            e_a = (w/2 - cx)/w
-            # if (abs(e_a) > 0.01):
-            #     my_twist.angular.z = k_a * e_a
-            # else:
-            #     my_twist.angular.z = 0
-            
-            # if self.front_dist == 0:
-            #     my_twist.linear.x = 0.1
-            # else:
-            #     dx = abs(self.distance - self.front_dist)
-            #     if dx < self.buffer:
-            #         my_twist.linear.x = 0
-            #     else:
-            #         e_l = (self.distance - self.front_dist)/self.front_dist
-            #         my_twist.linear.x = k_l * e_l
-        
+            if (w/2 - cx) > 0: 
+                #left side
+                self.artag_side = "left"
+            else: 
+                self.artag_side = "right"
         else:
-            pass
-            #my_twist.angular.z = 0.5
+            self.artag_side = "none"
+
+
 
         self.cmd_pub.publish(my_twist)
 
