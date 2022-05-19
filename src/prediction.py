@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from ast import NameConstant
+from hashlib import new
 from turtle import color, forward, update
 import rospy
 
@@ -8,6 +9,7 @@ import os
 import numpy as np
 import math
 import cv2, cv_bridge
+from datetime import datetime
 
 from std_msgs.msg import Bool, Header, String
 from sensor_msgs.msg import Image,LaserScan
@@ -62,7 +64,7 @@ class Prediction(object):
 
         self.odom_pose_last_motion_update = None
 
-        self.robot_estimate_pub = rospy.Publisher("estimated_robot_pose", PoseStamped, queue_size=10)
+        self.odom_pose = None
 
         self.tf_listener = TransformListener()
         self.tf_broadcaster = TransformBroadcaster()
@@ -72,6 +74,9 @@ class Prediction(object):
         self.runner_history = []
 
         self.target_position = []
+
+        # publish the current runner history
+        self.path_pub = rospy.Publisher("path_poses", PoseArray, queue_size=10)
 
         rospy.sleep(3)
 
@@ -122,11 +127,13 @@ class Prediction(object):
             self.odom_pose_last_motion_update = self.odom_pose
             return
 
+        print(self.odom_pose)
 
-        self.update_current_pose()
+        self.current_pose = self.odom_pose.pose
+        print(self.current_pose)
         return
 
-    def update_current_pose(self):
+    """def update_current_pose(self):
         curr_x = self.odom_pose.pose.position.x
         old_x = self.odom_pose_last_motion_update.pose.position.x
         
@@ -154,12 +161,35 @@ class Prediction(object):
         quat = quaternion_from_euler(0, 0, old_yaw + rotation_1 + rotation_2)
         self.current_pose.orientation = Quaternion(quat[0], quat[1], quat[2], quat[3])
         print(self.current_pose)
-        return
+        return"""
 
     def add_tracking_point(self, angle, distance):
-        #new_x = self.current_position.x
+        target_x = self.current_pose.position.x + math.cos(angle) * distance
+        target_y = self.current_pose.position.y + math.sin(angle) * distance
+        
+        target_pose = Pose()
+        target_pose.position.x = target_x
+        target_pose.position.y = target_y
+        target_pose.position.z = 0
 
+        self.runner_history.append((target_pose, datetime.now()))
+
+        self.publish_runner_history()
         return
+
+    def publish_runner_history(self):
+        history_pose_array = PoseArray()
+        history_pose_array.header = Header(stamp=rospy.Time.now(), frame_id=self.map_topic)
+        history_pose_array.poses
+
+    
+        for point in self.runner_history:
+            (point_pose, point_time) = point
+            history_pose_array.poses.append(point_pose)
+
+        print("Publishing particle cloud of size: " + str(len(self.runner_history)))
+
+        self.path_pub.publish(history_pose_array)
 
 
 if __name__ == "__main__":
