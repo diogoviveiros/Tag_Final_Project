@@ -20,5 +20,6 @@
   </group>
 
 
+  <node name="ardetect" pkg="Tag_Final_Project" type="ardetect.py" output="screen"/>
   <node name="prediction" pkg="Tag_Final_Project" type="prediction.py" output="screen"/>
 </launch>

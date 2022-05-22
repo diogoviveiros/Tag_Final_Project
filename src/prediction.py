@@ -14,6 +14,7 @@ from datetime import datetime
 from std_msgs.msg import Bool, Header, String
 from sensor_msgs.msg import Image,LaserScan
 from geometry_msgs.msg import Twist, Vector3, Pose, Point, PoseArray, PoseStamped, Quaternion
+from Tag_Final_Project.msg import AngleVector
 
 import tf
 from tf import TransformListener
@@ -78,6 +79,9 @@ class Prediction(object):
         # publish the current runner history
         self.path_pub = rospy.Publisher("path_poses", PoseArray, queue_size=10)
 
+        # Add angle vector subscription
+        self.angle_vec_sub = rospy.Subscriber('angle_vectors', AngleVector, self.vector_callback)
+
         rospy.sleep(3)
 
         self.initialized = True
@@ -90,19 +94,19 @@ class Prediction(object):
         # --- UPDATE BASED ON ODOMETRY --- 
         # wait until initialization is complete
         if not(self.initialized):
-            print("Not initialized")
+            print("Pred: Not initialized")
             return
 
         # we need to be able to transfrom the laser frame to the base frame
         if not(self.tf_listener.canTransform(self.base_frame, data.header.frame_id, data.header.stamp)):
-            print("Cannot transform?")
+            print("Pred: Cannot transform?")
             return
 
         # wait for a little bit for the transform to become avaliable (in case the scan arrives
         # a little bit before the odom to base_footprint transform was updated) 
         self.tf_listener.waitForTransform(self.base_frame, self.odom_frame, data.header.stamp, rospy.Duration(0.5))
         if not(self.tf_listener.canTransform(self.base_frame, data.header.frame_id, data.header.stamp)):
-            print("Waiting for transform")
+            print("Pred: Waiting for transform")
             return
 
         # calculate the pose of the laser distance sensor 
@@ -133,35 +137,10 @@ class Prediction(object):
         print(self.current_pose)
         return
 
-    """def update_current_pose(self):
-        curr_x = self.odom_pose.pose.position.x
-        old_x = self.odom_pose_last_motion_update.pose.position.x
-        
-        curr_y = self.odom_pose.pose.position.y
-        old_y = self.odom_pose_last_motion_update.pose.position.y
-        
-        curr_yaw = get_yaw_from_pose(self.odom_pose.pose)
-        old_yaw = get_yaw_from_pose(self.odom_pose_last_motion_update.pose)
-        
-        
-        #Might need to invert calculations for yaw or something? DOUBLE CHECK
-        delta_x = curr_x - old_x
-        delta_y = curr_y - old_y
-
-        rotation_1 = math.atan2(delta_y, delta_x) - old_yaw
-
-        translation = math.sqrt( (delta_x * delta_x) + (delta_y * delta_y) )
-
-        rotation_2 = curr_yaw - old_yaw - rotation_1
-
-        #self.current_pose.position.x = 
-        old_yaw = get_yaw_from_pose(self.current_pose)
-        self.current_pose.position.x = self.current_pose.position.x + translation * math.cos(old_yaw + rotation_1)
-        self.current_pose.position.y = self.current_pose.position.y + translation * math.sin(old_yaw + rotation_1)
-        quat = quaternion_from_euler(0, 0, old_yaw + rotation_1 + rotation_2)
-        self.current_pose.orientation = Quaternion(quat[0], quat[1], quat[2], quat[3])
-        print(self.current_pose)
-        return"""
+    def vector_callback(self, data):
+        print("Pred: Recieved Angle Vector (" + str(data.angle) + "," + str(data.distance) + ")")
+        self.add_tracking_point(data.angle, data.distance)
+        return
 
     def add_tracking_point(self, angle, distance):
         target_x = self.current_pose.position.x + math.cos(angle) * distance
@@ -187,7 +166,7 @@ class Prediction(object):
             (point_pose, point_time) = point
             history_pose_array.poses.append(point_pose)
 
-        print("Publishing particle cloud of size: " + str(len(self.runner_history)))
+        print("Pred: Publishing particle cloud of size: " + str(len(self.runner_history)))
 
         self.path_pub.publish(history_pose_array)
 
