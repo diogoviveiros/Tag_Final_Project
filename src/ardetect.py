@@ -14,6 +14,7 @@ class Chase(object):
     def __init__(self):
         self.bridge = cv_bridge.CvBridge()
         self.cam_angle = 0
+        self.object_distance = 0
         self.robot_movement_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         # initalize the debugging window
         #cv2.namedWindow("window", 1)
@@ -42,7 +43,7 @@ class Chase(object):
                     min_angle = i
 
             self.cam_angle = min_angle
-
+            self.object_distance = min_distance
             print("ar tag is at", self.artag_side)
             print("angle", min_angle)
             print("distance",min_distance)
@@ -56,7 +57,7 @@ class Chase(object):
                     min_angle = i
 
             self.cam_angle = 360-min_angle
-
+            self.object_distance = min_distance
             print("ar tag is at", self.artag_side)
             print("angle", 360-min_angle)
             print("distance",min_distance)
