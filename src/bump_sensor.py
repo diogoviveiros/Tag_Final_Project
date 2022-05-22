@@ -23,21 +23,31 @@ from turtlebot3_msgs.msg import SensorState
 
 class Bumper():
     def __init__(self):
+        self.click = False
         self.cmd_pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         self.bumper_sub = rospy.Subscriber('sensor_state', SensorState, self.get_bumper, queue_size = 10)
         self.twist = Twist()
         self.bumper()
+        
+
     def get_bumper(self, sensor):
         self.bumper_state = sensor.bumper
 
-        
         print("here",sensor)
-        if self.bumper_state == 1:
-            print("bumper state 1")
-            self.twist.linear.x = 0.0
-        elif self.bumper_state == 2:
-            print("bumper state 2")
-            self.twist.linear.x = 0.0
+        print("bumper state:", self.bumper_state)
+        if self.bumper_state == 2:
+
+            print("Clicked")
+            if self.click == False:
+                self.click = True
+            else: 
+                self.click = False
+            
+        if self.click == True:
+            self.twist.linear.x = -0.05
+        else:
+            self.twist.linear.x = 0.05
+
 
     def bumper(self):
         rate = rospy.Rate(10)
