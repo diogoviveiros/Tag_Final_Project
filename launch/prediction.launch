@@ -16,10 +16,10 @@
 
   <group if="$(arg open_rviz)"> 
     <node pkg="rviz" type="rviz" name="rviz" required="true"
-          args="-d $(find Tag_Final_Project)/rviz/tag_final_project.rviz"/>
+          args="-d $(find tag_final_project)/rviz/tag_final_project.rviz"/>
   </group>
 
 
-  <node name="ardetect" pkg="Tag_Final_Project" type="ardetect.py" output="screen"/>
-  <node name="prediction" pkg="Tag_Final_Project" type="prediction.py" output="screen"/>
+  <node name="ardetect" pkg="tag_final_project" type="ardetect.py" output="screen"/>
+  <node name="prediction" pkg="tag_final_project" type="prediction.py" output="screen"/>
 </launch>
