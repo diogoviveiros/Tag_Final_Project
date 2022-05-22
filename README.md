@@ -43,7 +43,8 @@ _Describe how to run your code, e.g., step-by-step instructions on what commands
 1. `roslaunch`
 2. SSH into a robot with `ssh pi@192.168.0.???`, then run `set_ip ???` and `bringup`
 3. SSH into robot again, this time running `set_ip ???` and `bringup_cam`
-4. Finally, run `roslaunch Tag_Final_Project prediction.launch`
+4. `rosrun image_transport republish compressed in:=raspicam_node/image raw out:=camera/rgb/image_raw`
+5. Finally, run `roslaunch Tag_Final_Project prediction.launch`
 
 **Launching the Runner**:
 TODO
