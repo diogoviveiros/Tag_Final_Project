@@ -121,7 +121,7 @@ class Chase(object):
         my_angle_vec = AngleVector()
         my_angle_vec.angle = self.cam_angle 
         my_angle_vec.distance = self.object_distance 
-        self.angle_vec_pub(my_angle_vec)
+        self.angle_vec_pub.publish(my_angle_vec)
 
         # shows the debugging window
         # hint: you might want to disable this once you're able to get a red circle in the debugging window
