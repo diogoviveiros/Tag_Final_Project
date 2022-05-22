@@ -13,6 +13,7 @@ class Chase(object):
 
     def __init__(self):
         self.bridge = cv_bridge.CvBridge()
+        self.cam_angle = 0
         self.robot_movement_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         # initalize the debugging window
         #cv2.namedWindow("window", 1)
@@ -27,34 +28,37 @@ class Chase(object):
         self.cmd_pub = rospy.Publisher('cmd_vel', Twist, queue_size = 10)
         self.coordinates = []
         self.artag_side = "none" #left, rightm or none
+        
 
 
     def process_scan(self, data):
         
-        
         if self.artag_side == "left":
             min_distance = 10000
-            min_angle = 10000
-            for i in np.arange(309, 360, 1):
+            min_angle = 0
+            for i in np.arange(0, 52, 1):
                 if data.ranges[i] < min_distance and data.ranges[i] != 0.0:
                     min_distance =  data.ranges[i]
                     min_angle = i
 
-            min_angle = min_angle - 360
+            self.cam_angle = min_angle
 
             print("ar tag is at", self.artag_side)
             print("angle", min_angle)
             print("distance",min_distance)
         elif self.artag_side == "right":
             min_distance = 10000 
-            min_angle = 10000
-            for i in np.arange(0, 52, 1):
+            min_angle = 0
+            for i in np.arange(309, 360, 1): 
+                
                 if  data.ranges[i] < min_distance and data.ranges[i] != 0.0:
                     min_distance =  data.ranges[i]
                     min_angle = i
 
+            self.cam_angle = 360-min_angle
+
             print("ar tag is at", self.artag_side)
-            print("angle", min_angle)
+            print("angle", 360-min_angle)
             print("distance",min_distance)
 
         else:
@@ -62,8 +66,9 @@ class Chase(object):
             # tag is not found in camera
             pass
 
-        
 
+        
+        
         
 
 
