@@ -7,7 +7,7 @@ from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image
 import datetime
 from sensor_msgs.msg import LaserScan
-
+from Tag_Final_Project.msg import AngleVector
 
 class Chase(object):
 
@@ -19,7 +19,7 @@ class Chase(object):
         # initalize the debugging window
         #cv2.namedWindow("window", 1)
 
-        rospy.Subscriber("/scan", LaserScan, self.process_scan, queue_size =1)
+        self.laser_sub = rospy.Subscriber("/scan", LaserScan, self.process_scan, queue_size =1)
 
         # subscribe to the robot's RGB camera data stream
         self.image_sub = rospy.Subscriber('camera/rgb/image_raw',
@@ -29,6 +29,8 @@ class Chase(object):
         self.cmd_pub = rospy.Publisher('cmd_vel', Twist, queue_size = 10)
         self.coordinates = []
         self.artag_side = "none" #left, rightm or none
+
+        self.angle_vec_pub = rospy.Publisher('angle_vectors', AngleVector, queue_size=10)
         
 
 
@@ -66,12 +68,6 @@ class Chase(object):
 
             # tag is not found in camera
             pass
-
-
-        
-        
-        
-
 
         return
     
@@ -122,6 +118,10 @@ class Chase(object):
 
 
         self.cmd_pub.publish(my_twist)
+        my_angle_vec = AngleVector()
+        my_angle_vec.angle = self.cam_angle 
+        my_angle_vec.distance = self.object_distance 
+        self.angle_vec_pub(my_angle_vec)
 
         # shows the debugging window
         # hint: you might want to disable this once you're able to get a red circle in the debugging window
