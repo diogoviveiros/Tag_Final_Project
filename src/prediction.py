@@ -140,6 +140,7 @@ class Prediction(object):
     def vector_callback(self, data):
         print("Pred: Recieved Angle Vector (" + str(data.angle) + "," + str(data.distance) + ")")
         self.add_tracking_point(data.angle, data.distance)
+        self.publish_runner_history()
         return
 
     def add_tracking_point(self, angle, distance):
