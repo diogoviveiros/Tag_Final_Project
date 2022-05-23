@@ -8,6 +8,7 @@ import rospy
 import os
 import numpy as np
 import math
+from sklearn.linear_model import LinearRegression
 import cv2, cv_bridge
 from datetime import datetime
 
@@ -63,7 +64,7 @@ class Prediction(object):
         self.odom_frame = "odom"
         self.scan_topic = "scan"
 
-        self.current_pose = Pose()
+        self.curr_pose = Pose()
 
         self.odom_pose_last_motion_update = None
 
@@ -73,10 +74,13 @@ class Prediction(object):
         self.tf_broadcaster = TransformBroadcaster()
 
         # --- INITIALIZE TRACKING ---
+        self.array_size = 100
+        self.runner_points = []
+        self.runner_times = []
+        self.curr_distance = 0
 
-        self.runner_history = []
-
-        self.target_position = []
+        # self.runner_history = []
+        # self.target_position = []
 
         # publish the current runner history
         self.path_pub = rospy.Publisher("path_poses", PoseArray, queue_size=10)
@@ -84,14 +88,17 @@ class Prediction(object):
         # Add angle vector subscription
         self.angle_vec_sub = rospy.Subscriber('angle_vectors', AngleVector, self.vector_callback)
 
+        # TODO: subscription to bump topic
+        # self.bumped_sub = rospy.Subscriber('', , self.bumped_callback)
+        self.bumped = False
+
         rospy.sleep(3)
 
         self.initialized = True
 
-    def image_callback(self, img):
-        return
 
     def scan_callback(self, data):
+        # gets the current pose of chaser robot using odometry
 
         # --- UPDATE BASED ON ODOMETRY --- 
         # wait until initialization is complete
@@ -135,35 +142,49 @@ class Prediction(object):
 
         print(self.odom_pose)
 
-        self.current_pose = self.odom_pose.pose
-        print(self.current_pose)
+        self.curr_pose = self.odom_pose.pose
+
+        print(self.curr_pose)
         return
 
     def vector_callback(self, data):
+        # callback function upon receiving information about runner
+        # processes info to get position and time history of runner 
         print("Pred: Recieved Angle Vector (" + str(data.angle) + "," + str(data.distance) + ")")
         self.add_tracking_point(data.angle, data.distance)
         self.publish_runner_history()
         return
 
     def add_tracking_point(self, angle, distance):
-        target_x = self.current_pose.position.x + math.cos(angle) * distance
-        target_y = self.current_pose.position.y + math.sin(angle) * distance
+        # calculates absolute position of runner on odometry map 
+        curr_angle = get_yaw_from_pose(self.curr_pose)
+        x = self.curr_pose.position.x + math.cos(angle + curr_angle) * distance
+        y = self.curr_pose.position.y + math.sin(angle + curr_angle) * distance
+
+        # store current distance to runner
+        self.curr_distance = distance
         
-        target_pose = Pose()
-        target_pose.position.x = target_x
-        target_pose.position.y = target_y
-        target_pose.position.z = 0
+        # store absolute path of runner and time info
+        target = Point()
+        target.x = x
+        target.y = y
 
-        self.runner_history.append((target_pose, datetime.now()))
+        self.runner_points.append(target)
+        self.runner_times.append(datetime.now())
 
-        self.publish_runner_history()
+        # pop oldest history if greater than array length
+        if len(self.runner_points) > self.array_size:
+            self.runner_points.pop()
+            self.runner_times.pop()
+
+        # self.runner_history.append((target_pose, datetime.now()))
         return
 
     def publish_runner_history(self):
+        # publishes runner history (IDK if necessary?)
         history_pose_array = PoseArray()
         history_pose_array.header = Header(stamp=rospy.Time.now(), frame_id=self.map_topic)
         history_pose_array.poses
-
     
         for point in self.runner_history:
             (point_pose, point_time) = point
@@ -173,8 +194,70 @@ class Prediction(object):
 
         self.path_pub.publish(history_pose_array)
 
+    def bump_callback(self, data):
+        # TODO: stop chasing if bumped into target
+        self.bumped = data
+
+    def predict(self):
+        # continuous loop that publishes vectors to move chaser in predicted path of runner
+        r = rospy.Rate(0.5)
+
+        while not rospy.is_shutdown() and not self.bumped:
+            # wait until we have filled runner history
+            if len(self.runner_points) == self.array_size:
+                # get x and y paths separately
+                xs = []
+                ys = []
+
+                for p in self.runner_points:
+                    xs.append(p.x)
+                    ys.append(p.y)
+
+                # convert to arrays
+                xs = np.array(xs)
+                ys = np.array(ys)
+                ts = np.array(self.runner_times)
+                ts = ts - ts[0] # make first timepoint 0
+
+                # predict next position of chaser proportionally to distance
+                v = 0.2
+                delta = 0.5 # basically how much more velocity to cover current distance
+                pred_time = self.curr_distance / (v + delta) # how far into future we want to predict, should be < set velocity
+
+                # linear regression of x vs. t and y vs. t
+                # can try polynomial regression? 
+                modelx = LinearRegression().fit(xs,ts)
+                modely = LinearRegression().fit(ys,ts)
+
+                print(f"x slope: {modelx.coef_}")
+                print(f"y slope: {modely.coef_}")
+
+                pred_x = modelx.coef_ * pred_time + modelx.intercept
+                pred_y = modely.coef_ * pred_time + modely.intercept
+
+                # calculate proportional turn towards predicted point
+                # linear velocity proportional to distance but has ceiling v
+                # implement derivative or integral? I dont think so since we probably aren't moving fast
+                dx = pred_x - self.curr_pose.position.x
+                dy = pred_y - self.curr_pose.position.y
+                
+                pred_theta = math.atan2(dy, dx)
+                pred_dist = math.sqrt(dx**2 + dy**2)
+                ka = 0.005
+                kl = 0.2
+
+                twist = Twist()
+                twist.angular.z = ka * pred_theta
+                twist.linear.x = max(kl * pred_dist, v)
+                self.twist_pub(twist)
+
+            r.sleep()
+        
+        rospy.spin()
+
+
 
 if __name__ == "__main__":
     node = Prediction()
-
-    rospy.spin()
+    node.predict()
+    
