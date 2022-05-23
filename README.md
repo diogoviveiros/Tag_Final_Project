@@ -20,7 +20,17 @@ TODO
 
 ### Path Prediction
 
-TODO
+All of the features of path prediction are handled in prediction.py.
+
+Our prediction algorithm involves collecting a history of positions of the runner robot as x and y coordinates, and then using those coordinates and basic statistical modelling approaches to extrapolate a possible path for the robot.
+
+![xy.png](xy.png)
+
+
+
+
+
+As the chaser moves, prediction.py uses odometry data to update the x and y coordinates of the robot, keeping constant track of its location. This is handled in the callback function to laser scan updates, `scan_callback`.
 
 ### Movement
 

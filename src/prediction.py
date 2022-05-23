@@ -59,7 +59,9 @@ class Prediction(object):
 
         # --- INITIALIZE ODOMOETRY ---
         self.base_frame = "base_footprint"
+        self.map_topic = "map"
         self.odom_frame = "odom"
+        self.scan_topic = "scan"
 
         self.current_pose = Pose()
 
