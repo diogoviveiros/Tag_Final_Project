@@ -9,12 +9,14 @@ import os
 import numpy as np
 import math
 from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
 import cv2, cv_bridge
 from datetime import datetime
 
 from std_msgs.msg import Bool, Header, String
 from sensor_msgs.msg import Image,LaserScan
 from geometry_msgs.msg import Twist, Vector3, Pose, Point, PoseArray, PoseStamped, Quaternion
+from turtlebot3_msgs.msg import SensorState
 from tag_final_project.msg import AngleVector
 
 import tf
@@ -33,6 +35,7 @@ def get_yaw_from_pose(p):
             [2])
 
     return yaw
+
 
 class Prediction(object):
     def __init__(self):
@@ -54,9 +57,7 @@ class Prediction(object):
         self.twist_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
 
         # Create a default twist msg (all values 0).
-        lin = Vector3()
-        ang = Vector3()
-        self.twist = Twist(linear=lin,angular=ang)
+        self.twist = Twist()
 
         # --- INITIALIZE ODOMOETRY ---
         self.base_frame = "base_footprint"
@@ -74,22 +75,19 @@ class Prediction(object):
         self.tf_broadcaster = TransformBroadcaster()
 
         # --- INITIALIZE TRACKING ---
-        self.array_size = 100
+        self.array_size = 100 # number of historical points to store
         self.runner_points = []
         self.runner_times = []
         self.curr_distance = 0
-
-        # self.runner_history = []
-        # self.target_position = []
 
         # publish the current runner history
         self.path_pub = rospy.Publisher("path_poses", PoseArray, queue_size=10)
 
         # Add angle vector subscription
-        self.angle_vec_sub = rospy.Subscriber('angle_vectors', AngleVector, self.vector_callback)
+        rospy.Subscriber('angle_vectors', AngleVector, self.vector_callback)
 
-        # TODO: subscription to bump topic
-        # self.bumped_sub = rospy.Subscriber('', , self.bumped_callback)
+        # subscription to bumper topic
+        rospy.Subscriber('sensor_state', SensorState, self.bumper_callback, queue_size = 10)
         self.bumped = False
 
         rospy.sleep(3)
@@ -147,13 +145,14 @@ class Prediction(object):
         print(self.curr_pose)
         return
 
+
     def vector_callback(self, data):
         # callback function upon receiving information about runner
         # processes info to get position and time history of runner 
-        print("Pred: Recieved Angle Vector (" + str(data.angle) + "," + str(data.distance) + ")")
+        print("Pred: Received Angle Vector (" + str(data.angle) + "," + str(data.distance) + ")")
         self.add_tracking_point(data.angle, data.distance)
         self.publish_runner_history()
-        return
+
 
     def add_tracking_point(self, angle, distance):
         # calculates absolute position of runner on odometry map 
@@ -170,15 +169,13 @@ class Prediction(object):
         target.y = y
 
         self.runner_points.append(target)
-        self.runner_times.append(datetime.now())
+        self.runner_times.append(datetime.now()) # i think actually time should come from aruco node but idk if it matters
 
         # pop oldest history if greater than array length
         if len(self.runner_points) > self.array_size:
             self.runner_points.pop()
             self.runner_times.pop()
 
-        # self.runner_history.append((target_pose, datetime.now()))
-        return
 
     def publish_runner_history(self):
         # publishes runner history (IDK if necessary?)
@@ -194,9 +191,12 @@ class Prediction(object):
 
         self.path_pub.publish(history_pose_array)
 
-    def bump_callback(self, data):
-        # TODO: stop chasing if bumped into target
-        self.bumped = data
+
+    def bumper_callback(self, data):
+        # stop chasing if bumped into target
+        if data.bumper == 2:
+            self.bumped == True
+
 
     def predict(self):
         # continuous loop that publishes vectors to move chaser in predicted path of runner
@@ -225,15 +225,30 @@ class Prediction(object):
                 pred_time = self.curr_distance / (v + delta) # how far into future we want to predict, should be < set velocity
 
                 # linear regression of x vs. t and y vs. t
-                # can try polynomial regression? 
-                modelx = LinearRegression().fit(xs,ts)
-                modely = LinearRegression().fit(ys,ts)
+                modelx = LinearRegression().fit(ts,xs)
+                modely = LinearRegression().fit(ts,ys)
 
-                print(f"x slope: {modelx.coef_}")
-                print(f"y slope: {modely.coef_}")
+                print(f"x coef: {modelx.coef_}")
+                print(f"y coef: {modely.coef_}")
 
-                pred_x = modelx.coef_ * pred_time + modelx.intercept
-                pred_y = modely.coef_ * pred_time + modely.intercept
+                pred_x = modelx.predict(pred_time)
+                pred_y = modely.predict(pred_time)
+
+                print(f"coordinate: {(pred_x, pred_y)}")
+
+                # polynomial regression degree 3
+                # poly = PolynomialFeatures(degree = 3)
+                # pts = poly.fit_transform(ts)
+                # polyx = LinearRegression().fit(pts, xs)
+                # polyy = LinearRegression().fit(pts, ys)
+
+                # print(f"x coef: {modelx.coef_}")
+                # print(f"y coef: {modely.coef_}")
+
+                # pred_x = polyx.predict(pred_time)
+                # pred_y = polyy.predict(pred_time)
+
+                # print(f"coordinate: {(pred_x, pred_y)}")
 
                 # calculate proportional turn towards predicted point
                 # linear velocity proportional to distance but has ceiling v
@@ -250,6 +265,24 @@ class Prediction(object):
                 twist.angular.z = ka * pred_theta
                 twist.linear.x = max(kl * pred_dist, v)
                 self.twist_pub(twist)
+
+                # if we don't get new data, loop should still run to move towards previous prediction
+                # we may want to fill in predictive path if we don't see the runner for a long time
+                # maybe aruco detection requests predicted timepoint and then we add one? 
+                # pred_xs = modelx.predict(request_buffer)
+                # pred_ys = modely.predict(request_buffer)
+                # for i in zip(pred_xs, pred_ys, request_buffer):
+                #     target = Point()
+                #     target.x = i[0]
+                #     target.y = i[1]
+
+                #     self.runner_points.append(target)
+                #     self.runner_times.append(i[2])
+
+                #     # pop oldest history if greater than array length
+                #     if len(self.runner_points) > self.array_size:
+                #         self.runner_points.pop()
+                #         self.runner_times.pop()
 
             r.sleep()
         
