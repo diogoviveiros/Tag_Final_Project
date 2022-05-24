@@ -1,0 +1,4 @@
+<launch>
+  <node name="ardetect" pkg="tag_final_project" type="detect_runner.py" output="screen"/>
+  <node name="prediction" pkg="tag_final_project" type="prediction.py" output="screen"/>
+</launch>

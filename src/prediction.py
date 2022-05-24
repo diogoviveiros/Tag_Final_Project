@@ -47,9 +47,6 @@ class Prediction(object):
         # set up ROS / OpenCV bridge
         self.bridge = cv_bridge.CvBridge()
 
-        # subscribe to the robot's RGB camera data stream
-        self.image_sub = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback)
-
         # Subscribe to LIDAR
         rospy.Subscriber("/scan", LaserScan, self.scan_callback)
 
@@ -183,11 +180,13 @@ class Prediction(object):
         history_pose_array.header = Header(stamp=rospy.Time.now(), frame_id=self.map_topic)
         history_pose_array.poses
     
-        for point in self.runner_history:
-            (point_pose, point_time) = point
+        for point in self.runner_points:
+            point_pose = Pose()
+            point_pose.position.x = point.x
+            point_pose.position.y = point.y
             history_pose_array.poses.append(point_pose)
 
-        print("Pred: Publishing particle cloud of size: " + str(len(self.runner_history)))
+        print("Pred: Publishing particle cloud of size: " + str(len(self.runner_points)))
 
         self.path_pub.publish(history_pose_array)
 

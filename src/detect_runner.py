@@ -39,18 +39,18 @@ class DetectRunner(object):
             self.object_distance = np.amin(rs[np.nonzero(rs)])
             self.cam_angle = np.argmin(rs[np.nonzero(rs)])
 
-            print("ar tag is at", self.artag_side)
-            print("angle", self.cam_angle)
-            print("distance", self.object_distance)
+            print("AR: ar tag is at", self.artag_side)
+            print("AR: angle", self.cam_angle)
+            print("AR: distance", self.object_distance)
         
         elif self.artag_side == "right":
             rs = rs[309:359]
             self.object_distance = np.amin(rs[np.nonzero(rs)])
             self.cam_angle = 360 - np.argmin(rs[np.nonzero(rs)])
 
-            print("ar tag is at", self.artag_side)
-            print("angle",self.cam_angle)
-            print("distance", self.object_distance)
+            print("AR: ar tag is at", self.artag_side)
+            print("AR: angle",self.cam_angle)
+            print("AR: distance", self.object_distance)
 
         # tag not found
         else:
@@ -73,11 +73,11 @@ class DetectRunner(object):
         if ids is not None:
             for i in range(len(ids)):
                 cxs.append(int((corners[i][0][0][0] + corners[i][0][2][0]) / 2))
-                cys.append(int((corners[i][0][0][0] + corners[i][0][2][0]) / 2))
+                cys.append(int((corners[i][0][0][1] + corners[i][0][2][1]) / 2))
 
             # get the overall center of markers 
-            cx = np.mean(cxs)
-            cy = np.mean(cys)
+            cx = int(np.mean(cxs))
+            cy = int(np.mean(cys))
 
             # a red circle is visualized in the debugging window
             cv2.circle(image, (cx, cy), 10, (0,0,255), -1)
