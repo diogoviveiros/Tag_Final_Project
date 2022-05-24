@@ -271,7 +271,7 @@ Visualization Manager:
       Use rainbow: true
       Value: false
     - Alpha: 1
-      Arrow Length: 1
+      Arrow Length: 0.1
       Axes Length: 0.30000001192092896
       Axes Radius: 0.009999999776482582
       Class: rviz/PoseArray
@@ -280,7 +280,7 @@ Visualization Manager:
       Head Length: 0.07000000029802322
       Head Radius: 0.029999999329447746
       Name: PoseArray
-      Queue Size: 10
+      Queue Size: 100
       Shaft Length: 0.23000000417232513
       Shaft Radius: 0.009999999776482582
       Shape: Arrow (Flat)

@@ -2,6 +2,7 @@
 
 from ast import NameConstant
 from hashlib import new
+from locale import currency
 from turtle import color, forward, update
 import rospy
 
@@ -120,7 +121,6 @@ class Prediction(object):
 
 
         self.laser_pose = self.tf_listener.transformPose(self.base_frame, p)
-        print(self.laser_pose)
         # determine where the robot thinks it is based on its odometry
         p = PoseStamped(
             header=Header(stamp=data.header.stamp,
@@ -135,11 +135,11 @@ class Prediction(object):
             self.odom_pose_last_motion_update = self.odom_pose
             return
 
-        print(self.odom_pose)
+        #print(self.odom_pose)
 
         self.curr_pose = self.odom_pose.pose
 
-        print(self.curr_pose)
+        print("Yaw: ", get_yaw_from_pose(self.curr_pose))
         return
 
 
@@ -154,8 +154,8 @@ class Prediction(object):
     def add_tracking_point(self, angle, distance):
         # calculates absolute position of runner on odometry map 
         curr_angle = get_yaw_from_pose(self.curr_pose)
-        x = self.curr_pose.position.x + math.cos(angle + curr_angle) * distance
-        y = self.curr_pose.position.y + math.sin(angle + curr_angle) * distance
+        x = self.curr_pose.position.x + math.cos(math.radians(angle) + curr_angle) * distance
+        y = self.curr_pose.position.y + math.sin(math.radians(angle) + curr_angle) * distance
 
         # store current distance to runner
         self.curr_distance = distance
@@ -164,6 +164,7 @@ class Prediction(object):
         target = Point()
         target.x = x
         target.y = y
+        target.z = 0
 
         self.runner_points.append(target)
 
@@ -171,10 +172,13 @@ class Prediction(object):
         t = t.to_sec()
         self.runner_times.append(t) # i think actually time should come from aruco node but idk if it matters
 
+        print(f'Adding Point: \n{target}, \n{t}')
         # pop oldest history if greater than array length
         if len(self.runner_points) > self.array_size:
-            self.runner_points.pop()
-            self.runner_times.pop()
+            self.runner_points.pop(0)
+            self.runner_times.pop(0)
+
+        return
 
 
     def publish_runner_history(self):
@@ -216,9 +220,9 @@ class Prediction(object):
                     ys.append(p.y)
 
                 # convert to arrays
-                xs = np.array(xs)
-                ys = np.array(ys)
-                ts = np.array(self.runner_times)
+                xs = np.array(xs).reshape(-1,1)
+                ys = np.array(ys).reshape(-1,1)
+                ts = np.array(self.runner_times).reshape(-1, 1)
                 ts = ts - ts[0] # make first timepoint 0
 
                 # predict next position of chaser proportionally to distance
@@ -233,8 +237,8 @@ class Prediction(object):
                 print(f"x coef: {modelx.coef_}")
                 print(f"y coef: {modely.coef_}")
 
-                pred_x = modelx.predict(pred_time)
-                pred_y = modely.predict(pred_time)
+                pred_x = modelx.predict(np.array(pred_time).reshape(-1, 1))
+                pred_y = modely.predict(np.array(pred_time).reshape(-1, 1))
 
                 print(f"coordinate: {(pred_x, pred_y)}")
 
@@ -263,10 +267,10 @@ class Prediction(object):
                 ka = 0.005
                 kl = 0.2
 
-                twist = Twist()
-                twist.angular.z = ka * pred_theta
-                twist.linear.x = max(kl * pred_dist, v)
-                self.twist_pub(twist)
+                #twist = Twist()
+                #twist.angular.z = ka * pred_theta
+                #twist.linear.x = max(kl * pred_dist, v)
+                #self.twist_pub.publish(twist)
 
                 # if we don't get new data, loop should still run to move towards previous prediction
                 # we may want to fill in predictive path if we don't see the runner for a long time
