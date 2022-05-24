@@ -166,7 +166,10 @@ class Prediction(object):
         target.y = y
 
         self.runner_points.append(target)
-        self.runner_times.append(datetime.now()) # i think actually time should come from aruco node but idk if it matters
+
+        t = rospy.get_rostime()
+        t = t.to_sec()
+        self.runner_times.append(t) # i think actually time should come from aruco node but idk if it matters
 
         # pop oldest history if greater than array length
         if len(self.runner_points) > self.array_size:
