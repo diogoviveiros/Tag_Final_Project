@@ -71,4 +71,9 @@ TODO
 
 _These should take a similar form and structure to how you approached these in the previous projects (1 paragraph each for the challenges and future work and a few bullet points for takeaways)_
 
+### Limitations of our Approach
+For the sake of time, we had to make a few concessions to simplify our project, but there are many interesting extensions here that we would've liked to pursue.
+
+- Detecting runner direction - Our current approach to predicting the runner's trajectory involves guessing their direction by extrapolating from the history of their past locations, but our approach does not attempt to estimate or use information about the current orientation of the runner. We had discussed a method for doing this that would involve a few smaller AR tags, one on each side of the runner, as well as prediction algorithms that would take advantage of this data, but it quickly grew to beyond the scope of what we could tackle within the timeline.
+
 TODO
