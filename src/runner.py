@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import rospy
-import math
 import random
+from datetime import datetime
 
 # msgs needed for /cmd_vel
 from geometry_msgs.msg import Twist, Vector3
@@ -17,46 +17,59 @@ class Runner(object):
         self.robot_movement_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         #Setup publisher for laser scanning
         self.laser_sub = rospy.Subscriber("/scan", LaserScan, self.process_scan, queue_size =1)
-    
-    def run(self):
+        self.last_turn_time = datetime.now()
 
-        # setup the Twist message that moves the robot forward
-        move_forward = Twist(
-            linear=Vector3(0.5, 0, 0),
-            angular=Vector3(0, 0, 0)
-        )
+        self.last_update = datetime.now()
 
-        rotate = Twist(
-            linear = Vector3(0,0,0),
-            angular = Vector3(0,0, random.uniform(-3.14, 3.14) )
-        )
+        self.twist = Twist(
+                    linear=Vector3(0.05, 0, 0),
+                    angular=Vector3(0, 0, 0)
+                )
 
-        self.robot_movement_pub.publish(rotate)
+        self.last_twist = None
+
 
         rospy.sleep(2)
+    
+    def run(self):
+            print("IS RUNNING")
+            # setup the Twist message that moves the robot forward
+            
+        #rospy.spin()
 
-        self.robot_movement_pub.publish(move_forward)
-
-        rospy.sleep(random.randrange(4,9))
 
     def process_scan(self, data):
-
-        min_dist = 5
-        
-        #Checks the front of the robot for an obstacle (particularly walls)
-        if(data.ranges[0] <= min_dist and data.ranges[0] != 0.0):
-            angle = random.uniform(-4.71, 4.71)
-            while(math.abs(angle) < 4.71): 
-                angle = random.uniform(-4.71, 4.71)
-
-            self.twist.angular.z = angle
-
-         
-        #Rotate in a random direction predetermined in the if condition right above
-    
+            min_dist = 0.4
             
-        self.twist_pub.publish(self.twist)
-        rospy.delay(2)
+            #Checks the front of the robot for an obstacle (particularly walls)
+            if(data.ranges[0] <= min_dist and data.ranges[0] != 0.0):
+                print("Wall")
+                angle = -2
+                self.twist.linear.x = 0
+                self.twist.angular.z = angle
+            else:
+                print("No wall")
+                self.twist.linear.x = 0.05
+
+                if ((datetime.now() - self.last_turn_time).total_seconds() > 12):
+                    self.twist.angular.z = random.uniform(-1, 1)
+                    self.twist.linear.x = 0
+                    self.last_turn_time = datetime.now()
+
+                if ((datetime.now() - self.last_turn_time).total_seconds() > 2):
+                    self.twist.angular.z = 0
+                    self.twist.linear.x = 0.05
+        
+         
+            #Rotate in a random direction predetermined in the if condition right above
+            if self.twist != self.last_twist:
+                print("Publishing new twist")
+                print(self.twist)
+                self.robot_movement_pub.publish(self.twist)
+                self.last_twist = self.last_twist
+
+    def run(self):
+        rospy.spin()
 
 if __name__ == '__main__':
     # instantiate the ROS node and run it
