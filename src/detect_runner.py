@@ -42,6 +42,7 @@ class DetectRunner(object):
             print("AR: ar tag is at", self.artag_side)
             print("AR: angle", self.cam_angle)
             print("AR: distance", self.object_distance)
+            print("AR: timestamp", self.timestamp)
         
         elif self.artag_side == "right":
             rs = rs[309:359]
@@ -51,10 +52,15 @@ class DetectRunner(object):
             print("AR: ar tag is at", self.artag_side)
             print("AR: angle",self.cam_angle)
             print("AR: distance", self.object_distance)
+            print("AR: timestamp", self.timestamp)
 
         # tag not found
         else:
-            pass
+            print("AR: ar tag is at", self.artag_side)
+            print("AR: angle",self.cam_angle)
+            print("AR: distance", self.object_distance)
+            print("AR: timestamp", self.timestamp)
+
 
     
     def image_callback(self, msg):
@@ -69,8 +75,9 @@ class DetectRunner(object):
         # get centers of all detected markers
         cxs = []
         cys = []
-
+        
         if ids is not None:
+            
             for i in range(len(ids)):
                 cxs.append(int((corners[i][0][0][0] + corners[i][0][2][0]) / 2))
                 cys.append(int((corners[i][0][0][1] + corners[i][0][2][1]) / 2))
@@ -89,6 +96,7 @@ class DetectRunner(object):
             else: 
                 self.artag_side = "right"
         else:
+            
             self.artag_side = "none"
             
             self.cam_angle == -1
