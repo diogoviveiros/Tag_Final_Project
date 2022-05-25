@@ -32,6 +32,7 @@ class DetectRunner(object):
     def process_scan(self, data):
         # get runner position as angle and min dist from laserscan
         rs = np.nan_to_num(data.ranges)
+        
 
         # get min distance validated by which side of the camera the marker is detected on
         if self.artag_side == "left":
@@ -39,27 +40,28 @@ class DetectRunner(object):
             self.object_distance = np.amin(rs[np.nonzero(rs)])
             self.cam_angle = np.argmin(rs[np.nonzero(rs)])
 
-            print("AR: ar tag is at", self.artag_side)
-            print("AR: angle", self.cam_angle)
-            print("AR: distance", self.object_distance)
-            print("AR: timestamp", self.timestamp)
+            # print("AR: ar tag is at", self.artag_side)
+            # print("AR: angle", self.cam_angle)
+            # print("AR: distance", self.object_distance)
+            # print("AR: timestamp", self.timestamp)
         
         elif self.artag_side == "right":
             rs = rs[309:359]
             self.object_distance = np.amin(rs[np.nonzero(rs)])
             self.cam_angle = 360 - np.argmin(rs[np.nonzero(rs)])
 
-            print("AR: ar tag is at", self.artag_side)
-            print("AR: angle",self.cam_angle)
-            print("AR: distance", self.object_distance)
-            print("AR: timestamp", self.timestamp)
+            # print("AR: ar tag is at", self.artag_side)
+            # print("AR: angle",self.cam_angle)
+            # print("AR: distance", self.object_distance)
+            # print("AR: timestamp", self.timestamp)
 
         # tag not found
         else:
-            print("AR: ar tag is at", self.artag_side)
-            print("AR: angle",self.cam_angle)
-            print("AR: distance", self.object_distance)
-            print("AR: timestamp", self.timestamp)
+            pass
+            # print("AR: ar tag is at", self.artag_side)
+            # print("AR: angle",self.cam_angle)
+            # print("AR: distance", self.object_distance)
+            # print("AR: timestamp", self.timestamp)
 
 
     
