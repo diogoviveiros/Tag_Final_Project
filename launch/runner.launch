@@ -1,0 +1,3 @@
+<launch>
+  <node name="runner" pkg="tag_final_project" type="runner.py" output="screen"/>
+</launch>
