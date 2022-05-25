@@ -130,7 +130,7 @@ class Prediction(object):
 
 
         self.laser_pose = self.tf_listener.transformPose(self.base_frame, p)
-        print(self.laser_pose)
+
         # determine where the robot thinks it is based on its odometry
         p = PoseStamped(
             header=Header(stamp=data.header.stamp,
@@ -149,7 +149,7 @@ class Prediction(object):
 
         self.curr_pose = self.odom_pose.pose
 
-        print("curr_pose:",self.curr_pose)
+        #print("curr_pose:",self.curr_pose)
         return
 
 
@@ -174,6 +174,7 @@ class Prediction(object):
         else:
             # calculate position of runner
             curr_angle = get_yaw_from_pose(self.curr_pose)
+            angle *= np.pi / 180
             self.curr_distance = distance
 
             x = self.curr_pose.position.x + math.cos(angle + curr_angle) * distance
@@ -271,7 +272,7 @@ class Prediction(object):
 
                 #print(f"x coef: {self.modelx.coef_}")
                 #print(f"y coef: {self.modely.coef_}")
-                print(f"coordinate: {(pred_x, pred_y)}")
+                print(f"coordinate: {(pred_x[0][0], pred_y[0][0])}")
 
                 # polynomial regression degree 3
                 # poly = PolynomialFeatures(degree = 3)
@@ -303,8 +304,8 @@ class Prediction(object):
                 twist = Twist()
                 twist.angular.z = ka * pred_theta
                 twist.linear.x = max(kl * pred_dist, v)
-                print("publish twist:", twist)
-                self.twist_pub.publish(twist)
+                #print("publish twist:", twist)
+                #self.twist_pub.publish(twist)
 
                 # if we don't get new data, loop should still run to move towards previous prediction
                 # we may want to fill in predictive path if we don't see the runner for a long time
