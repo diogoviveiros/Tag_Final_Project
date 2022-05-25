@@ -2,7 +2,6 @@
 
 from ast import NameConstant
 from hashlib import new
-from locale import currency
 from turtle import color, forward, update
 import rospy
 
@@ -73,7 +72,7 @@ class Prediction(object):
         self.tf_broadcaster = TransformBroadcaster()
 
         # --- INITIALIZE TRACKING ---
-        self.array_size = 100 # number of historical points to store
+        self.array_size = 50 # number of historical points to store ~ 8s of history
         self.runner_points = []
         self.runner_times = []
         self.curr_distance = 0
@@ -87,6 +86,10 @@ class Prediction(object):
         # subscription to bumper topic
         rospy.Subscriber('sensor_state', SensorState, self.bumper_callback, queue_size = 10)
         self.bumped = False
+
+        # store prediction models
+        self.modelx = None
+        self.modely = None 
 
         rospy.sleep(3)
 
@@ -121,6 +124,7 @@ class Prediction(object):
 
 
         self.laser_pose = self.tf_listener.transformPose(self.base_frame, p)
+        print(self.laser_pose)
         # determine where the robot thinks it is based on its odometry
         p = PoseStamped(
             header=Header(stamp=data.header.stamp,
@@ -139,7 +143,7 @@ class Prediction(object):
 
         self.curr_pose = self.odom_pose.pose
 
-        print("Yaw: ", get_yaw_from_pose(self.curr_pose))
+        #print(self.curr_pose)
         return
 
 
@@ -147,38 +151,39 @@ class Prediction(object):
         # callback function upon receiving information about runner
         # processes info to get position and time history of runner 
         print("Pred: Received Angle Vector (" + str(data.angle) + "," + str(data.distance) + ")")
-        self.add_tracking_point(data.angle, data.distance)
+        self.add_tracking_point(data.angle, data.distance, data.timestamp)
         self.publish_runner_history()
 
 
-    def add_tracking_point(self, angle, distance):
+    def add_tracking_point(self, angle, distance, time):
         # calculates absolute position of runner on odometry map 
-        curr_angle = get_yaw_from_pose(self.curr_pose)
-        x = self.curr_pose.position.x + math.cos(math.radians(angle) + curr_angle) * distance
-        y = self.curr_pose.position.y + math.sin(math.radians(angle) + curr_angle) * distance
-
-        # store current distance to runner
-        self.curr_distance = distance
         
-        # store absolute path of runner and time info
+        if angle == -1 and distance == -1:
+            # if ar tag is not detected, predict missing path using existing models
+            assert self.modelx, "Model X does not exist"
+            assert self.modely, "Model Y does not exist"
+            x, y = self.predict(time - self.runner_times[0])
+        else:
+            # calculate position of runner
+            curr_angle = get_yaw_from_pose(self.curr_pose)
+            self.curr_distance = distance
+
+            x = self.curr_pose.position.x + math.cos(angle + curr_angle) * distance
+            y = self.curr_pose.position.y + math.sin(angle + curr_angle) * distance
+
+        # store path of runner
         target = Point()
         target.x = x
         target.y = y
-        target.z = 0
-
         self.runner_points.append(target)
+        
+        # store time info
+        self.runner_times.append(time) 
 
-        t = rospy.get_rostime()
-        t = t.to_sec()
-        self.runner_times.append(t) # i think actually time should come from aruco node but idk if it matters
-
-        print(f'Adding Point: \n{target}, \n{t}')
         # pop oldest history if greater than array length
         if len(self.runner_points) > self.array_size:
             self.runner_points.pop(0)
             self.runner_times.pop(0)
-
-        return
 
 
     def publish_runner_history(self):
@@ -202,15 +207,22 @@ class Prediction(object):
         # stop chasing if bumped into target
         if data.bumper == 2:
             self.bumped == True
+            self.twist_pub.publish(Twist())
 
 
-    def predict(self):
+    def predict(self, pred_ts):
+        pred_x = self.modelx.predict(np.array(pred_ts).reshape(-1,1))
+        pred_y = self.modely.predict(np.array(pred_ts).reshape(-1,1))
+        return pred_x, pred_y
+
+
+    def run(self):
         # continuous loop that publishes vectors to move chaser in predicted path of runner
-        r = rospy.Rate(0.5)
+        r = rospy.Rate(2)
 
         while not rospy.is_shutdown() and not self.bumped:
             # wait until we have filled runner history
-            if len(self.runner_points) == self.array_size:
+            if len(self.runner_points) == 20:
                 # get x and y paths separately
                 xs = []
                 ys = []
@@ -222,7 +234,7 @@ class Prediction(object):
                 # convert to arrays
                 xs = np.array(xs).reshape(-1,1)
                 ys = np.array(ys).reshape(-1,1)
-                ts = np.array(self.runner_times).reshape(-1, 1)
+                ts = np.array(self.runner_times).reshape(-1,1)
                 ts = ts - ts[0] # make first timepoint 0
 
                 # predict next position of chaser proportionally to distance
@@ -231,15 +243,12 @@ class Prediction(object):
                 pred_time = self.curr_distance / (v + delta) # how far into future we want to predict, should be < set velocity
 
                 # linear regression of x vs. t and y vs. t
-                modelx = LinearRegression().fit(ts,xs)
-                modely = LinearRegression().fit(ts,ys)
+                self.modelx = LinearRegression().fit(ts,xs)
+                self.modely = LinearRegression().fit(ts,ys)
+                pred_x, pred_y = self.predict(pred_time)
 
-                print(f"x coef: {modelx.coef_}")
-                print(f"y coef: {modely.coef_}")
-
-                pred_x = modelx.predict(np.array(pred_time).reshape(-1, 1))
-                pred_y = modely.predict(np.array(pred_time).reshape(-1, 1))
-
+                print(f"x coef: {self.modelx.coef_}")
+                print(f"y coef: {self.modely.coef_}")
                 print(f"coordinate: {(pred_x, pred_y)}")
 
                 # polynomial regression degree 3
@@ -262,15 +271,15 @@ class Prediction(object):
                 dx = pred_x - self.curr_pose.position.x
                 dy = pred_y - self.curr_pose.position.y
                 
-                pred_theta = math.atan2(dy, dx)
-                pred_dist = math.sqrt(dx**2 + dy**2)
-                ka = 0.005
+                pred_theta = math.atan2(dx, dy) # this might be issue if y and x are reversed
+                pred_dist = math.sqrt(dx**2 + dy**2) 
+                ka = 0.002
                 kl = 0.2
 
-                #twist = Twist()
-                #twist.angular.z = ka * pred_theta
-                #twist.linear.x = max(kl * pred_dist, v)
-                #self.twist_pub.publish(twist)
+                twist = Twist()
+                twist.angular.z = ka * pred_theta
+                twist.linear.x = max(kl * pred_dist, v)
+                self.twist_pub.publish(twist)
 
                 # if we don't get new data, loop should still run to move towards previous prediction
                 # we may want to fill in predictive path if we don't see the runner for a long time
