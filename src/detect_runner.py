@@ -13,9 +13,9 @@ class DetectRunner(object):
 
     def __init__(self):
         self.bridge = cv_bridge.CvBridge()
-        self.cam_angle = 0
-        self.object_distance = 0
-
+        self.cam_angle = -1
+        self.object_distance = -1
+        self.timestamp = rospy.get_rostime().to_sec()
         self.laser_sub = rospy.Subscriber("/scan", LaserScan, self.process_scan, queue_size =1)
 
         # subscribe to the robot's RGB camera data stream
@@ -90,10 +90,20 @@ class DetectRunner(object):
                 self.artag_side = "right"
         else:
             self.artag_side = "none"
+            
+            self.cam_angle == -1
+            self.object_distance == -1
+            #rospy.sleep(1)
+         
+               
+
+
+        self.timestamp = rospy.get_rostime().to_sec()
 
         my_angle_vec = AngleVector()
         my_angle_vec.angle = self.cam_angle 
-        my_angle_vec.distance = self.object_distance 
+        my_angle_vec.distance = self.object_distance
+        my_angle_vec.timestamp = self.timestamp 
         # i think we should publish time data here as well
         self.angle_vec_pub.publish(my_angle_vec)
 
