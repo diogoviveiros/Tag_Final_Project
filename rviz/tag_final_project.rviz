@@ -11,6 +11,7 @@ Panels:
         - /LaserScan1
         - /DepthCloud1/Auto Size1
         - /PoseArray1
+        - /Pose1
       Splitter Ratio: 0.6029411554336548
     Tree Height: 1520
   - Class: rviz/Selection
@@ -285,6 +286,22 @@ Visualization Manager:
       Shaft Radius: 0.009999999776482582
       Shape: Arrow (Flat)
       Topic: /path_poses
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.10000000149011612
+      Class: rviz/Pose
+      Color: 0; 255; 0
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: Pose
+      Queue Size: 10
+      Shaft Length: 0.5
+      Shaft Radius: 0.05000000074505806
+      Shape: Arrow
+      Topic: /predicted_pose
       Unreliable: false
       Value: true
   Enabled: true

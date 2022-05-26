@@ -80,6 +80,9 @@ class Prediction(object):
         # publish the current runner history
         self.path_pub = rospy.Publisher("path_poses", PoseArray, queue_size=10)
 
+        # Publish the targetted pose
+        self.target_pose_pub = rospy.Publisher("predicted_pose", PoseStamped, queue_size=10)
+
         # Add angle vector subscription
         rospy.Subscriber('angle_vectors', AngleVector, self.vector_callback)
 
@@ -211,6 +214,16 @@ class Prediction(object):
 
         self.path_pub.publish(history_pose_array)
 
+    def publish_target_pose(self, target_point):
+        new_pose = PoseStamped()
+        new_pose.header = Header(stamp=rospy.Time.now(), frame_id=self.map_topic)
+        new_pose.pose = Pose()
+        (x, y) = target_point
+        new_pose.pose.position.x = x
+        new_pose.pose.position.y = y
+
+        self.target_pose_pub.publish(new_pose)
+
 
     def bumper_callback(self, data):
         # stop chasing if bumped into target
@@ -269,6 +282,7 @@ class Prediction(object):
                 self.modelx = LinearRegression().fit(ts,xs)
                 self.modely = LinearRegression().fit(ts,ys)
                 pred_x, pred_y = self.predict(pred_time)
+                self.publish_target_pose((pred_x[0][0], pred_y[0][0]))
 
                 #print(f"x coef: {self.modelx.coef_}")
                 #print(f"y coef: {self.modely.coef_}")
