@@ -269,8 +269,8 @@ class Prediction(object):
                 print("curr dist:", self.curr_distance)
 
                 # predict next position of chaser proportionally to distance
-                v = 0.2
-                delta = 0.5 # basically how much more velocity to cover current distance
+                v = 0.05
+                delta = 0.1 # basically how much more velocity to cover current distance
                 pred_time = self.curr_distance / (v + delta) + ts[-1] # how far into future we want to predict, should be < set velocity
 
                 # linear regression of x vs. t and y vs. t
@@ -307,8 +307,8 @@ class Prediction(object):
                 pred_dist = math.sqrt(dx**2 + dy**2) 
                 print("theta: ", pred_theta)
                 print("pred dist: ", pred_dist)
-                ka = 0.1
-                kl = 0.2
+                ka = 0.05
+                kl = 0.05
 
                 twist = Twist()
                 twist.angular.z = ka * pred_theta
