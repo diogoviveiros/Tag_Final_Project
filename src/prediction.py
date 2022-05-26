@@ -72,7 +72,7 @@ class Prediction(object):
         self.tf_broadcaster = TransformBroadcaster()
 
         # --- INITIALIZE TRACKING ---
-        self.array_size = 50 # number of historical points to store ~ 8s of history
+        self.array_size = 30 # number of historical points to store ~ 8s of history
         self.runner_points = []
         self.runner_times = []
         self.curr_distance = 0
@@ -251,7 +251,7 @@ class Prediction(object):
         
         while not rospy.is_shutdown() and not self.bumped:
             # wait until we have filled runner history
-            if len(self.runner_points) >= 20:
+            if len(self.runner_points) >= 10:
                 # get x and y paths separately
                 xs = []
                 ys = []
@@ -307,12 +307,12 @@ class Prediction(object):
                 pred_dist = math.sqrt(dx**2 + dy**2) 
                 print("theta: ", pred_theta)
                 print("pred dist: ", pred_dist)
-                ka = 0.05
+                ka = 0.03
                 kl = 0.05
 
                 twist = Twist()
                 twist.angular.z = ka * pred_theta
-                twist.linear.x = max(kl * pred_dist, v)
+                twist.linear.x = min(kl * pred_dist, v)
                 #print("publish twist:", twist)
                 self.twist_pub.publish(twist)
                 print("\n")
