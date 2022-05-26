@@ -72,7 +72,7 @@ class Prediction(object):
         self.tf_broadcaster = TransformBroadcaster()
 
         # --- INITIALIZE TRACKING ---
-        self.array_size = 30 # number of historical points to store ~ 8s of history
+        self.array_size = 40 # number of historical points to store ~ 4s of history
         self.runner_points = []
         self.runner_times = []
         self.curr_distance = 0
@@ -251,7 +251,7 @@ class Prediction(object):
         
         while not rospy.is_shutdown() and not self.bumped:
             # wait until we have filled runner history
-            if len(self.runner_points) >= 10:
+            if len(self.runner_points) >= 20:
                 # get x and y paths separately
                 xs = []
                 ys = []
@@ -265,13 +265,14 @@ class Prediction(object):
                 ys = np.array(ys).reshape(-1,1)
                 ts = np.array(self.runner_times).reshape(-1,1)
                 ts = ts - ts[0] # make first timepoint 0
-                print(f"coord : {(xs[-1][0], ys[-1][0], ts[-1][0])}")
-                print("curr dist:", self.curr_distance)
+                #print(f"coord : {(xs[-1][0], ys[-1][0], ts[-1][0])}")
+                #print("curr dist:", self.curr_distance)
 
                 # predict next position of chaser proportionally to distance
-                v = 0.05
-                delta = 0.1 # basically how much more velocity to cover current distance
+                v = 0.1
+                delta = 0.7 # basically how much more velocity to cover current distance
                 pred_time = self.curr_distance / (v + delta) + ts[-1] # how far into future we want to predict, should be < set velocity
+                # may need to rethink since if we don't see, the min dist we return is very large 
 
                 # linear regression of x vs. t and y vs. t
                 self.modelx = LinearRegression().fit(ts,xs)
@@ -281,7 +282,7 @@ class Prediction(object):
 
                 #print(f"x coef: {self.modelx.coef_}")
                 #print(f"y coef: {self.modely.coef_}")
-                print(f"pred coord: {(pred_x[0][0], pred_y[0][0], pred_time)}")
+                #print(f"pred coord: {(pred_x[0][0], pred_y[0][0], pred_time[0])}")
 
                 # polynomial regression degree 3
                 # poly = PolynomialFeatures(degree = 3)
@@ -302,20 +303,21 @@ class Prediction(object):
                 # implement derivative or integral? I dont think so since we probably aren't moving fast
                 dx = pred_x - self.curr_pose.position.x
                 dy = pred_y - self.curr_pose.position.y
+                #print(f"diffs: {(dx, dy)}")
                 
-                pred_theta = math.atan2(dx, dy) # this might be issue if y and x are reversed
+                pred_theta = math.atan(dx/dy) 
                 pred_dist = math.sqrt(dx**2 + dy**2) 
-                print("theta: ", pred_theta)
-                print("pred dist: ", pred_dist)
+                #print("theta: ", pred_theta)
+                #print("pred dist: ", pred_dist)
                 ka = 0.03
-                kl = 0.05
+                kl = 0.1
 
                 twist = Twist()
                 twist.angular.z = ka * pred_theta
                 twist.linear.x = min(kl * pred_dist, v)
                 #print("publish twist:", twist)
                 self.twist_pub.publish(twist)
-                print("\n")
+                #print("\n")
 
             r.sleep()
         

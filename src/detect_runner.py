@@ -27,6 +27,7 @@ class DetectRunner(object):
 
         # publisher for angle and distance of runner robot
         self.angle_vec_pub = rospy.Publisher('angle_vectors', AngleVector, queue_size=10)
+        self.counter = 0
         
 
     def process_scan(self, data):
@@ -57,11 +58,11 @@ class DetectRunner(object):
 
         # tag not found
         else:
-            pass
             # print("AR: ar tag is at", self.artag_side)
             # print("AR: angle",self.cam_angle)
             # print("AR: distance", self.object_distance)
             # print("AR: timestamp", self.timestamp)
+            pass
 
 
     
@@ -89,7 +90,7 @@ class DetectRunner(object):
             cy = int(np.mean(cys))
 
             # a red circle is visualized in the debugging window
-            cv2.circle(image, (cx, cy), 10, (0,0,255), -1)
+            # cv2.circle(image, (cx, cy), 10, (0,0,255), -1)
 
             # this might not be as robust if we are not detecting a subset of markers
             if (w/2 - cx) > 0: 
@@ -114,13 +115,20 @@ class DetectRunner(object):
         my_angle_vec.angle = self.cam_angle 
         my_angle_vec.distance = self.object_distance
         my_angle_vec.timestamp = self.timestamp 
-        # i think we should publish time data here as well
         self.angle_vec_pub.publish(my_angle_vec)
+
+        # if self.counter%5 == 0:
+        #     self.angle_vec_pub.publish(my_angle_vec)
+        #     print("time :", self.timestamp)
+        # else:
+        #     self.counter+=1
+
+        rospy.sleep(1)
 
         # shows the debugging window
         # hint: you might want to disable this once you're able to get a red circle in the debugging window
-        cv2.imshow("window", image)
-        cv2.waitKey(3)
+        # cv2.imshow("window", image)
+        # cv2.waitKey(3)
 
     def run(self):
         rospy.spin()
