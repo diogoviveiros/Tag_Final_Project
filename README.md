@@ -1,5 +1,6 @@
 # Turtlebot Tag
 
+
 ## Project Description
 
 _Describe the goal of your project, why it's interesting, what you were able to make your robot do, and what the main components of your project are and how they fit together - please include diagrams and gifs when appropriate_
@@ -7,6 +8,10 @@ _Describe the goal of your project, why it's interesting, what you were able to 
 Our project consists of two robots playing tag, a chaser, and a runner. The chaser uses a path prediction algorithm to estimate where the runner will be, and catch it at that future location. The chaser achieves this by storing a history of the runner's locations, and using statistical extrapolation algorithms to predict the path that the runner may be taking.
 
 TODO - Description of movement and tagging/switching 
+
+![1_0_GIF_0](https://user-images.githubusercontent.com/66953378/170405315-794b7e3c-18ed-4998-9fe2-27fd32794203.GIF)
+![1_0_GIF_0 2](https://user-images.githubusercontent.com/66953378/170405335-2f934a4d-2aec-46a8-bf0b-03f7f20dbee7.GIF)
+
 
 
 ## System Architecture
