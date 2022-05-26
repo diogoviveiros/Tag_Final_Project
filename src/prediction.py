@@ -84,7 +84,7 @@ class Prediction(object):
         rospy.Subscriber('angle_vectors', AngleVector, self.vector_callback)
 
         # subscription to bumper topic
-        #rospy.Subscriber('sensor_state', SensorState, self.bumper_callback, queue_size = 10)
+        rospy.Subscriber('sensor_state', SensorState, self.bumper_callback, queue_size = 10)
         
 
         # store prediction models
@@ -97,12 +97,6 @@ class Prediction(object):
 
 
     def scan_callback(self, data):
-
-        rs = np.nan_to_num(data.ranges)
-        rs = rs[0:359]
-        dist = np.amin(rs[np.nonzero(rs)])
-        if dist < 0.1:
-            self.bumped = True
         # gets the current pose of chaser robot using odometry
 
         # --- UPDATE BASED ON ODOMETRY --- 
@@ -157,6 +151,8 @@ class Prediction(object):
         # callback function upon receiving information about runner
         # processes info to get position and time history of runner 
         #print("Pred: Received Angle Vector (" + str(data.angle) + "," + str(data.distance) + ")")
+        if not self.initialized:
+            return
         self.add_tracking_point(data.angle, data.distance, data.timestamp)
         self.publish_runner_history()
 
@@ -226,9 +222,7 @@ class Prediction(object):
                 self.twist_pub.publish(stop)
                 r.sleep()
                 t -= 1/2
-            print("Bumped!", self.bumped)
-
-        
+            print("Bumped!")        
 
 
     def predict(self, pred_ts):
@@ -253,17 +247,18 @@ class Prediction(object):
                     xs.append(p.x)
                     ys.append(p.y)
 
-                #print("xs :",xs)
                 # convert to arrays
                 xs = np.array(xs).reshape(-1,1)
                 ys = np.array(ys).reshape(-1,1)
                 ts = np.array(self.runner_times).reshape(-1,1)
                 ts = ts - ts[0] # make first timepoint 0
+                print(f"coord : {(xs[-1][0], ys[-1][0], ts[-1][0])}")
+                print("curr dist:", self.curr_distance)
 
                 # predict next position of chaser proportionally to distance
                 v = 0.2
                 delta = 0.5 # basically how much more velocity to cover current distance
-                pred_time = self.curr_distance / (v + delta) # how far into future we want to predict, should be < set velocity
+                pred_time = self.curr_distance / (v + delta) + ts[-1] # how far into future we want to predict, should be < set velocity
 
                 # linear regression of x vs. t and y vs. t
                 self.modelx = LinearRegression().fit(ts,xs)
@@ -272,7 +267,7 @@ class Prediction(object):
 
                 #print(f"x coef: {self.modelx.coef_}")
                 #print(f"y coef: {self.modely.coef_}")
-                print(f"coordinate: {(pred_x[0][0], pred_y[0][0])}")
+                print(f"pred coord: {(pred_x[0][0], pred_y[0][0], pred_time)}")
 
                 # polynomial regression degree 3
                 # poly = PolynomialFeatures(degree = 3)
@@ -305,25 +300,8 @@ class Prediction(object):
                 twist.angular.z = ka * pred_theta
                 twist.linear.x = max(kl * pred_dist, v)
                 #print("publish twist:", twist)
-                #self.twist_pub.publish(twist)
-
-                # if we don't get new data, loop should still run to move towards previous prediction
-                # we may want to fill in predictive path if we don't see the runner for a long time
-                # maybe aruco detection requests predicted timepoint and then we add one? 
-                # pred_xs = modelx.predict(request_buffer)
-                # pred_ys = modely.predict(request_buffer)
-                # for i in zip(pred_xs, pred_ys, request_buffer):
-                #     target = Point()
-                #     target.x = i[0]
-                #     target.y = i[1]
-
-                #     self.runner_points.append(target)
-                #     self.runner_times.append(i[2])
-
-                #     # pop oldest history if greater than array length
-                #     if len(self.runner_points) > self.array_size:
-                #         self.runner_points.pop()
-                #         self.runner_times.pop()
+                self.twist_pub.publish(twist)
+                print("\n")
 
             r.sleep()
         
