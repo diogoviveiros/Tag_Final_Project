@@ -10,17 +10,18 @@ Our project consists of two robots (a chaser and a runner) playing tag. The runn
 ![1_0_GIF_0](https://user-images.githubusercontent.com/66953378/170405315-794b7e3c-18ed-4998-9fe2-27fd32794203.GIF)
 ![1_0_GIF_0 2](https://user-images.githubusercontent.com/66953378/170405335-2f934a4d-2aec-46a8-bf0b-03f7f20dbee7.GIF)
 
-Our project is interesting because it is able to solve problems that the person follower code you can't solve. Specifically, our project can use path prediction model to predict the future path of the runner much more accurately and can let the chaser can tag the runner even when the chaser is operating at a lower speed than the runner.
+Our project is interesting because it is able to solve problems that the person follower code you can't solve. Specifically, our project can use path prediction model to predict the future path of the runner much more accurately and can let the chaser tag the runner even when the chaser is operating at a lower speed than the runner.
 
 
 ## System Architecture
 
 _Describe in detail the robotics algorithm you implemented and each major component of your project, highlight what pieces of code contribute to these main components_
 
-
 ### Runner Detection
 
-TODO - Describe how ardetect.py works
+We implement our object tracking algorithm in `ardetect.py`. The way we design the runner is to put 11 different AR tags on its sides. When the runner shows up in chaser's camera field of view, we check for an average location of the runner's AR tags so that we can locate where the runner is in the chaser's camera. From the average location of the runner's AR tags, we can estimate where the runner is to the chaser and find the minimal distance and the angle from the chaser to the runner.
+
+<img width="341" alt="Screen Shot 2022-05-27 at 1 33 52 AM" src="https://user-images.githubusercontent.com/66953378/170644235-cb4b5a60-9745-48ba-8b27-9303b018cc1e.png">
 
 Finally, the estimated angle and distance to the runner robot are published to the topic `angle_vectors`, to be used by prediction.py in the path prediction process.
 
