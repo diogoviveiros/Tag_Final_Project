@@ -19,7 +19,7 @@ _Describe in detail the robotics algorithm you implemented and each major compon
 
 ### Runner Detection
 
-We implement our object tracking algorithm in `ardetect.py`. The way we design the runner is to put 11 different AR tags on its sides. When the runner shows up in chaser's camera field of view, we check for an average location of the runner's AR tags so that we can locate where the runner is in the chaser's camera. From the average location of the runner's AR tags, we can estimate where the runner is to the chaser and find the estimated distance and angle from the chaser to the runner.
+We implement our object tracking algorithm in `detect_runner.py`. The way we design the runner is to put 11 different AR tags on its sides. When the runner shows up in chaser's camera field of view, we check for an average location of the runner's AR tags so that we can locate where the runner is in the chaser's camera. From the average location of the runner's AR tags, we can estimate where the runner is to the chaser and find the estimated distance and angle from the chaser to the runner.
 
 <img width="341" alt="Screen Shot 2022-05-27 at 1 33 52 AM" src="https://user-images.githubusercontent.com/66953378/170644235-cb4b5a60-9745-48ba-8b27-9303b018cc1e.png">
 
@@ -64,11 +64,24 @@ _Describe how to run your code, e.g., step-by-step instructions on what commands
 **Launching the Runner**:
 1. `roscore`
 2. SSH into a robot with `ssh pi@192.168.0.???`, then run `set_ip ???` and `bringup`
-3. `rosrun `
+3. `rosrun tag_final_project runner.py`
 
 ## Challenges, Future Work, and Takeaways
 
 _These should take a similar form and structure to how you approached these in the previous projects (1 paragraph each for the challenges and future work and a few bullet points for takeaways)_
+
+### Challenges
+When we implement our project, we encounter the following challenges: 
+- Due to the lag of the camera, the AR tags on the runner are sometimes not visible to the chaser robot. This will cause us to record some missing travel history points of the runner, which will in turn cause us unable to make prediction on the runner's path. Whenever this happens, we will meed to move close to csil5 and hope that the router's connection is strong and stable.
+- Runner moves outside of chaser’s LiDAR 
+	→ location of the runner is unknown 
+Bumper is only present at front of chaser 
+	→ difficult to tag
+Adjusting parameters of our model 
+	→ prediction is not too spontaneous or too invariant
+### Future Work
+
+### Takeaways
 
 ### Limitations of our Approach
 For the sake of time, we had to make a few concessions to simplify our project, but there are many interesting extensions here that we would've liked to pursue.
