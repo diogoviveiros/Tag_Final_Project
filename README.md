@@ -37,17 +37,17 @@ The following diagram shows how we're calculating these coordinates from the giv
 
 Once we calculate a coordiante position for the runner, we add it, with a timestamp, to our runner location history array. This array is published to RVIZ as a series of poses so that we can debug the process (see the gif on the right hand side). Once we have our array of coordinates for the robot, we perform a linear regression on the most recent < 20 points to predict a line of best fit corresponding with the path of the runner robot.
 
-### Movement
+### Chaser Movement
 
-TODO
+Once the predicted coordinate of the runner's future location is known, the chaser uses proportional control to move towards the predicted coordinate of the runner. The code for chaser's movement in implemented in `prediction.py` as well.
 
 ### Runner Behavior
 
-TODO
+The runner moves in random directions and maintains that direction for a period of time. When it sees an obstacles such as a wall, it would attempt to avoid it. The code for the runner is implemented in the `runner.py` file.
 
 ### Bumping
 
-TODO
+The detection of whether the chaser's bumper sensor is touched or not is implemented in the `prediction.py`. In the file, we subscribe to the `sensor_state` topic and inside of our `bumper_callback` function we detect whether the bumper state has changed or not (ie meaning whether the sensor is touched or not). If it is touched, we set the `self.bumped` flag to true, which will stop the chasing action of the chaser.
 
 ## Execution
 
