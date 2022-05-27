@@ -142,18 +142,14 @@ class Prediction(object):
             self.odom_pose_last_motion_update = self.odom_pose
             return
 
-        #print(self.odom_pose)
-
         self.curr_pose = self.odom_pose.pose
 
-        #print("curr_pose:",self.curr_pose)
         return
 
 
     def vector_callback(self, data):
         # callback function upon receiving information about runner
         # processes info to get position and time history of runner 
-        #print("Pred: Received Angle Vector (" + str(data.angle) + "," + str(data.distance) + ")")
         if not self.initialized:
             return
         self.add_tracking_point(data.angle, data.distance, data.timestamp)
@@ -205,8 +201,6 @@ class Prediction(object):
             point_pose.position.x = point.x
             point_pose.position.y = point.y
             history_pose_array.poses.append(point_pose)
-
-        #print("Pred: Publishing particle cloud of size: " + str(len(self.runner_points)))
 
         self.path_pub.publish(history_pose_array)
 
@@ -265,8 +259,6 @@ class Prediction(object):
                 ys = np.array(ys).reshape(-1,1)
                 ts = np.array(self.runner_times).reshape(-1,1)
                 ts = ts - ts[0] # make first timepoint 0
-                #print(f"coord : {(xs[-1][0], ys[-1][0], ts[-1][0])}")
-                #print("curr dist:", self.curr_distance)
 
                 # predict next position of chaser proportionally to distance
                 v = 0.1
@@ -280,44 +272,33 @@ class Prediction(object):
                 pred_x, pred_y = self.predict(pred_time)
                 self.publish_target_pose((pred_x[0][0], pred_y[0][0]))
 
-                #print(f"x coef: {self.modelx.coef_}")
-                #print(f"y coef: {self.modely.coef_}")
-                #print(f"pred coord: {(pred_x[0][0], pred_y[0][0], pred_time[0])}")
-
                 # polynomial regression degree 3
                 # poly = PolynomialFeatures(degree = 3)
                 # pts = poly.fit_transform(ts)
                 # polyx = LinearRegression().fit(pts, xs)
                 # polyy = LinearRegression().fit(pts, ys)
 
-                # print(f"x coef: {modelx.coef_}")
-                # print(f"y coef: {modely.coef_}")
-
                 # pred_x = polyx.predict(pred_time)
                 # pred_y = polyy.predict(pred_time)
-
-                # print(f"coordinate: {(pred_x, pred_y)}")
 
                 # calculate proportional turn towards predicted point
                 # linear velocity proportional to distance but has ceiling v
                 # implement derivative or integral? I dont think so since we probably aren't moving fast
                 dx = pred_x - self.curr_pose.position.x
                 dy = pred_y - self.curr_pose.position.y
-                #print(f"diffs: {(dx, dy)}")
                 
                 pred_theta = math.atan(dx/dy) 
                 pred_dist = math.sqrt(dx**2 + dy**2) 
-                #print("theta: ", pred_theta)
-                #print("pred dist: ", pred_dist)
+
                 ka = 0.03
                 kl = 0.1
 
                 twist = Twist()
                 twist.angular.z = ka * pred_theta
                 twist.linear.x = min(kl * pred_dist, v)
-                #print("publish twist:", twist)
+
                 self.twist_pub.publish(twist)
-                #print("\n")
+
 
             r.sleep()
         

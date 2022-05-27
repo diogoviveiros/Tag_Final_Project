@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+# this is used for debugging the runner's running path
 import rospy
 
 # msgs needed for /cmd_vel

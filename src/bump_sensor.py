@@ -15,7 +15,7 @@
 # limitations under the License.
 #################################################################################
 
-# Authors: Gilbert #
+# we use this code to check whether the bumper sensor is working or not
 
 import rospy
 from geometry_msgs.msg import Twist

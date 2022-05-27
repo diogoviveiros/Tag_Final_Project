@@ -19,7 +19,7 @@ _Describe in detail the robotics algorithm you implemented and each major compon
 
 ### Runner Detection
 
-We implement our object tracking algorithm in `detect_runner.py`. The way we design the runner is to put 11 different AR tags on its sides. When the runner shows up in chaser's camera field of view, we check for an average location of the runner's AR tags so that we can locate where the runner is in the chaser's camera. From the average location of the runner's AR tags, we can estimate where the runner is to the chaser and find the estimated distance and angle from the chaser to the runner.
+We implement our object tracking algorithm in `detect_runner.py` and specifically in the `process_scan()` and `image_callback()` functions. The way we design the runner is to put 11 different AR tags on its sides. When the runner shows up in chaser's camera field of view, we check for an average location of the runner's AR tags so that we can locate where the runner is in the chaser's camera (eg. whether it is on the left or right). From the average location of the runner's AR tags, we can estimate where the runner is to the chaser and find the estimated distance and angle from the chaser to the runner.
 
 <img width="341" alt="Screen Shot 2022-05-27 at 1 33 52 AM" src="https://user-images.githubusercontent.com/66953378/170644235-cb4b5a60-9745-48ba-8b27-9303b018cc1e.png">
 
@@ -27,9 +27,7 @@ Finally, the estimated distance and angle to the runner robot are published to t
 
 ### Path Prediction
 
-All of the features of path prediction are handled in `prediction.py`.
-
-Our prediction algorithm involves collecting a history of positions of the runner robot as x and y coordinates, and then using those coordinates and basic statistical modelling approaches to extrapolate a possible path for the robot. In order to collect x & y positions of the runner, we must also track the current x & y position of our chaser robot. We do this by setting its starting location to be the origin, (0,0), and as the chaser moves, we use odometry data to update its stored x and y coordinates of the robot, keeping constant track of its location. This is handled in the callback function to laser scan updates, `scan_callback`. We then use this information, combined with the angle and distance sent by the ardetect.py module, to calculate a coordinate for the runner robot. 
+All of the features of path prediction are handled in `prediction.py` and almost all of the functions in that file. Our prediction algorithm involves collecting a history of positions of the runner robot as x and y coordinates, and then using those coordinates and basic statistical modelling approaches to extrapolate a possible path for the robot. In order to collect x & y positions of the runner, we must also track the current x & y position of our chaser robot. We do this by setting its starting location to be the origin, (0,0), and as the chaser moves, we use odometry data to update its stored x and y coordinates of the robot, keeping constant track of its location. This is handled in the callback function to laser scan updates, `scan_callback`. We then use this information, combined with the angle and distance sent by the ardetect.py module, to calculate a coordinate for the runner robot. 
 
 The following diagram shows how we're calculating these coordinates from the given information. 
 
@@ -47,7 +45,7 @@ The runner moves in random directions and maintains that direction for a period 
 
 ### Bumping
 
-The detection of whether the chaser's bumper sensor is touched or not is implemented in the `prediction.py`. In the file, we subscribe to the `sensor_state` topic and inside of our `bumper_callback` function we detect whether the bumper state has changed or not (ie meaning whether the sensor is touched or not). If it is touched, we set the `self.bumped` flag to true, which will stop the chasing action of the chaser.
+The detection of whether the chaser's bumper sensor is touched or not is implemented in the `prediction.py`. In the file, we subscribe to the `sensor_state` topic and inside of our `bumper_callback()` function we detect whether the bumper state has changed or not (ie meaning whether the sensor is touched or not). If it is touched, we set the `self.bumped` flag to true, which will stop the chasing action of the chaser.
 
 ## Execution
 

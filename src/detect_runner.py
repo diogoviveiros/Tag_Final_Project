@@ -40,32 +40,16 @@ class DetectRunner(object):
             rs = rs[0:52]
             self.object_distance = np.amin(rs[np.nonzero(rs)])
             self.cam_angle = np.argmin(rs[np.nonzero(rs)])
-
-            # print("AR: ar tag is at", self.artag_side)
-            # print("AR: angle", self.cam_angle)
-            # print("AR: distance", self.object_distance)
-            # print("AR: timestamp", self.timestamp)
         
         elif self.artag_side == "right":
             rs = rs[309:359]
             self.object_distance = np.amin(rs[np.nonzero(rs)])
             self.cam_angle = 360 - np.argmin(rs[np.nonzero(rs)])
 
-            # print("AR: ar tag is at", self.artag_side)
-            # print("AR: angle",self.cam_angle)
-            # print("AR: distance", self.object_distance)
-            # print("AR: timestamp", self.timestamp)
-
         # tag not found
         else:
-            # print("AR: ar tag is at", self.artag_side)
-            # print("AR: angle",self.cam_angle)
-            # print("AR: distance", self.object_distance)
-            # print("AR: timestamp", self.timestamp)
             pass
 
-
-    
     def image_callback(self, msg):
 
         image = self.bridge.imgmsg_to_cv2(msg,desired_encoding='bgr8')
@@ -104,10 +88,6 @@ class DetectRunner(object):
             
             self.cam_angle == -1
             self.object_distance == -1
-            #rospy.sleep(1)
-         
-               
-
 
         self.timestamp = rospy.get_rostime().to_sec()
 
@@ -116,12 +96,6 @@ class DetectRunner(object):
         my_angle_vec.distance = self.object_distance
         my_angle_vec.timestamp = self.timestamp 
         self.angle_vec_pub.publish(my_angle_vec)
-
-        # if self.counter%5 == 0:
-        #     self.angle_vec_pub.publish(my_angle_vec)
-        #     print("time :", self.timestamp)
-        # else:
-        #     self.counter+=1
 
         rospy.sleep(1)
 
