@@ -19,31 +19,23 @@ _Describe in detail the robotics algorithm you implemented and each major compon
 
 ### Runner Detection
 
-We implement our object tracking algorithm in `ardetect.py`. The way we design the runner is to put 11 different AR tags on its sides. When the runner shows up in chaser's camera field of view, we check for an average location of the runner's AR tags so that we can locate where the runner is in the chaser's camera. From the average location of the runner's AR tags, we can estimate where the runner is to the chaser and find the minimal distance and the angle from the chaser to the runner.
+We implement our object tracking algorithm in `ardetect.py`. The way we design the runner is to put 11 different AR tags on its sides. When the runner shows up in chaser's camera field of view, we check for an average location of the runner's AR tags so that we can locate where the runner is in the chaser's camera. From the average location of the runner's AR tags, we can estimate where the runner is to the chaser and find the estimated distance and angle from the chaser to the runner.
 
 <img width="341" alt="Screen Shot 2022-05-27 at 1 33 52 AM" src="https://user-images.githubusercontent.com/66953378/170644235-cb4b5a60-9745-48ba-8b27-9303b018cc1e.png">
 
-Finally, the estimated angle and distance to the runner robot are published to the topic `angle_vectors`, to be used by prediction.py in the path prediction process.
+Finally, the estimated distance and angle to the runner robot are published to the topic `angle_vectors`, to be used by `prediction.py` in the path prediction process.
 
 ### Path Prediction
 
-All of the features of path prediction are handled in prediction.py.
+All of the features of path prediction are handled in `prediction.py`.
 
-Our prediction algorithm involves collecting a history of positions of the runner robot as x and y coordinates, and then using those coordinates and basic statistical modelling approaches to extrapolate a possible path for the robot.
-
-In order to collect x & y positions of the runner, we must also track the current x & y position of our chaser robot. We do this by setting its starting location to be the origin, (0,0), and as the chaser moves, we use odometry data to update its stored x and y coordinates of the robot, keeping constant track of its location. This is handled in the callback function to laser scan updates, `scan_callback`.
-
-We then use this information, combined with the angle and distance sent by the ardetect.py module, to calculate a coordinate for the runner robot. 
+Our prediction algorithm involves collecting a history of positions of the runner robot as x and y coordinates, and then using those coordinates and basic statistical modelling approaches to extrapolate a possible path for the robot. In order to collect x & y positions of the runner, we must also track the current x & y position of our chaser robot. We do this by setting its starting location to be the origin, (0,0), and as the chaser moves, we use odometry data to update its stored x and y coordinates of the robot, keeping constant track of its location. This is handled in the callback function to laser scan updates, `scan_callback`. We then use this information, combined with the angle and distance sent by the ardetect.py module, to calculate a coordinate for the runner robot. 
 
 The following diagram shows how we're calculating these coordinates from the given information. 
 
 ![xy.png](images/xy.png)
 
-Once we calculate a coordiante position for the runner, we add it, with a timestamp, to our runner location history array. This array is published to RVIZ as a series of poses so that we can debug the process.
-
-TODO - INCLUDE RVIZ IMAGE
-
-Once we have our array of coordinates for the robot, we perform a linear regression on the most recent <20 points to predict a line of best fit corresponding with the path of the runner robot.
+Once we calculate a coordiante position for the runner, we add it, with a timestamp, to our runner location history array. This array is published to RVIZ as a series of poses so that we can debug the process (see the gif on the right hand side). Once we have our array of coordinates for the robot, we perform a linear regression on the most recent < 20 points to predict a line of best fit corresponding with the path of the runner robot.
 
 ### Movement
 
@@ -53,7 +45,7 @@ TODO
 
 TODO
 
-### Bumping and Switching
+### Bumping
 
 TODO
 
@@ -70,7 +62,9 @@ _Describe how to run your code, e.g., step-by-step instructions on what commands
 5. Finally, run `roslaunch tag_final_project prediction.launch` This launch file will launch the ardetect.py and prediction.py nodes
 
 **Launching the Runner**:
-TODO
+1. `roscore`
+2. SSH into a robot with `ssh pi@192.168.0.???`, then run `set_ip ???` and `bringup`
+3. `rosrun `
 
 ## Challenges, Future Work, and Takeaways
 
