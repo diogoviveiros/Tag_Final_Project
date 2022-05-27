@@ -66,6 +66,8 @@ _Describe how to run your code, e.g., step-by-step instructions on what commands
 2. SSH into a robot with `ssh pi@192.168.0.???`, then run `set_ip ???` and `bringup`
 3. `rosrun tag_final_project runner.py`
 
+The `drive.py`, `bump_sensor.py`, `test.py` are files we kept for debug purpose only.
+
 ## Challenges, Future Work, and Takeaways
 
 _These should take a similar form and structure to how you approached these in the previous projects (1 paragraph each for the challenges and future work and a few bullet points for takeaways)_
