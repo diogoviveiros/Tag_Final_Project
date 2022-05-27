@@ -28,7 +28,7 @@ Finally, the estimated distance and angle to the runner robot are published alon
 
 All of the features of path prediction are handled in `prediction.py` and almost all of the functions in that file. Our prediction algorithm involves collecting a history of positions of the runner robot as x and y coordinates, and then using those coordinates and basic statistical modelling approaches to extrapolate a possible path for the robot. In order to collect x & y positions of the runner, we must also track the current x & y position of our chaser robot. We do this by setting its starting location to be the origin, (0,0), and as the chaser moves, we use odometry data to update its stored x and y coordinates of the robot, keeping constant track of its location. This is handled in the callback function to laser scan updates, `scan_callback`. We then use this information, combined with the angle and distance sent by the ardetect.py module, to calculate a coordinate for the runner robot.
 
-The following diagram shows how we're calculating these coordinates from the given information. 
+The following diagram shows how we're calculating these coordinates from the given information.
 
 ![xy.png](images/xy.png)
 
@@ -62,6 +62,7 @@ _Describe how to run your code, e.g., step-by-step instructions on what commands
 6. (OPTIONAL) If you wish to launch without RVIZ, you can run `roslaunch tag_final_project prediction_no_rviz.launch` instead of `prediction.launch`
 
 **Launching the Runner**:
+
 1. `roscore`
 2. SSH into a robot with `ssh pi@192.168.0.???`, then run `set_ip ???` and `bringup`
 3. `rosrun tag_final_project runner.py`
@@ -73,21 +74,21 @@ The `drive.py`, `bump_sensor.py`, `test.py` are files we kept for debug purpose 
 _These should take a similar form and structure to how you approached these in the previous projects (1 paragraph each for the challenges and future work and a few bullet points for takeaways)_
 
 ### Challenges
-When we implement our project, we encounter the following challenges: 
+
+When we implement our project, we encounter the following challenges:
+
 - Due to the lag of the camera, the AR tags on the runner are sometimes not visible to the chaser robot. This will cause us to record some missing travel history points of the runner, which will in turn cause us to be unable to make prediction on the runner's path. Whenever this happens, we will need to move close to csil5 and hope that the router's connection is strong and stable.
 - Since the chaser's LiDAR range is only 3 meters, we can't really predict the location of the runner if the runner moves outside of chaser’s LiDAR. Thus, to let our model works, we need to ensure that the runner is within the LiDAR range of the chaser.
 - Because we are only able to add a bumper sensor at the front of the chaser, it would sometimes encounter difficulty to ensure the chaser's front side is hitting the runner. Yet, by adding extra card board layers in front of the touch sensor, we are able to expand the surface area of the touch sensor and increase the successful tag rate. 
 
 ### Future Work
+
 For the sake of time, we had to make a few concessions to simplify our project, but there are many interesting extensions here that we would've liked to pursue. To detect runner direction, our current approach to predicting the runner's trajectory involves guessing their direction by extrapolating from the history of their past locations, but our approach does not attempt to estimate or use information about the current orientation of the runner. We had discussed a method for doing this that would involve a few smaller AR tags, one on each side of the runner, as well as prediction algorithms that would take advantage of this data, but it quickly grew to beyond the scope of what we could tackle within the timeline. Thus, incorporating the information about the current orientation of the runner in our prediction modle will definitely be something that we want to do in the future.
 
 Additionally, we would definitely want to add more complexity into our project. For example, we would like the chaser to be able to distinguish obstacles from runner. We would also like the implment more non-linear paths prediction (e.g. zig-zagging or Hidden Markov Model) of the runner to see if those would be better than our current linear predicion model. Last but not least, we definitely want to create a full game of tag where runner and chaser can switch role after the chaser tag the runner. This would imply that we need to add bumper sensor on the runner and add AR tags to the chaser in order to implement the full game.
 
 ### Takeaways
+
 - We learned how to attach new sensors (e.g. touch sensor) to the OpenCR board
 - We learned how to utilize rviz to debug our project code and use it to show the travel history of the runner and the prediction path of the runner
-- We learned how to employ a prediction model to predict the future location of a runner given a set of its past travel history coordinates
-
-
-
-
+- We learned how to employ a prediction model to predict the future location of a runner given a set of its past travel history coordinates.
