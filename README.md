@@ -72,13 +72,10 @@ _These should take a similar form and structure to how you approached these in t
 
 ### Challenges
 When we implement our project, we encounter the following challenges: 
-- Due to the lag of the camera, the AR tags on the runner are sometimes not visible to the chaser robot. This will cause us to record some missing travel history points of the runner, which will in turn cause us unable to make prediction on the runner's path. Whenever this happens, we will meed to move close to csil5 and hope that the router's connection is strong and stable.
-- Runner moves outside of chaser’s LiDAR 
-	→ location of the runner is unknown 
-Bumper is only present at front of chaser 
-	→ difficult to tag
-Adjusting parameters of our model 
-	→ prediction is not too spontaneous or too invariant
+- Due to the lag of the camera, the AR tags on the runner are sometimes not visible to the chaser robot. This will cause us to record some missing travel history points of the runner, which will in turn cause us to be unable to make prediction on the runner's path. Whenever this happens, we will need to move close to csil5 and hope that the router's connection is strong and stable.
+- Since the chaser's LiDAR range is only 3 meters, we can't really predict the location of the runner if the runner moves outside of chaser’s LiDAR. Thus, to let our model works, we need to ensure that the runner is within the LiDAR range of the chaser.
+- Because we are only able to add a bumper sensor at the front of the chaser, it sometimes would encounter difficulty ensure the chaser's front side to hit the runner. Yet, by adding extra card board layes in front of the touch sensor, we are able to expand the surface area of the touch sensor and incrase the successful tag rate. 
+
 ### Future Work
 
 ### Takeaways
