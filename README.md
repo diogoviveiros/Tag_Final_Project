@@ -77,16 +77,15 @@ When we implement our project, we encounter the following challenges:
 - Because we are only able to add a bumper sensor at the front of the chaser, it sometimes would encounter difficulty ensure the chaser's front side to hit the runner. Yet, by adding extra card board layes in front of the touch sensor, we are able to expand the surface area of the touch sensor and incrase the successful tag rate. 
 
 ### Future Work
-If we have more time in the future, we would definitely want to add more complexity into our project. For example, we would like the chaser to be able to distinguish obstacles from runner. We would also like the implment more non-linear paths prediction (e.g. zig-zagging or Hidden Markov Model) of the runner to see if those would be better than our current linear predicion model. Last but not least, we definitely want to create a full game of tag where runner and chaser can switch role after the chaser tag the runner. This would imply that we need to add bumper sensor on the runner and add Ar tags to the chaser in order to implement the full game.
+For the sake of time, we had to make a few concessions to simplify our project, but there are many interesting extensions here that we would've liked to pursue. To detect runner direction, our current approach to predicting the runner's trajectory involves guessing their direction by extrapolating from the history of their past locations, but our approach does not attempt to estimate or use information about the current orientation of the runner. We had discussed a method for doing this that would involve a few smaller AR tags, one on each side of the runner, as well as prediction algorithms that would take advantage of this data, but it quickly grew to beyond the scope of what we could tackle within the timeline. Thus, incorporating the information about the current orientation of the runner in our prediction modle will definitely be something that we want to do in the future.
+
+Additionally, we would definitely want to add more complexity into our project. For example, we would like the chaser to be able to distinguish obstacles from runner. We would also like the implment more non-linear paths prediction (e.g. zig-zagging or Hidden Markov Model) of the runner to see if those would be better than our current linear predicion model. Last but not least, we definitely want to create a full game of tag where runner and chaser can switch role after the chaser tag the runner. This would imply that we need to add bumper sensor on the runner and add Ar tags to the chaser in order to implement the full game.
 
 ### Takeaways
 - We learned how to attach new sensors (e.g. touch sensor) to the OpenCR board
-- We learned how to utilize rviz to debug our project code and use it to show that travel history of the runner and the prediction path of the runner
-- We learned how to employ a prediction model to predict the future location of a runner given a set of its past travel history
+- We learned how to utilize rviz to debug our project code and use it to show the travel history of the runner and the prediction path of the runner
+- We learned how to employ a prediction model to predict the future location of a runner given a set of its past travel history coordinates
 
-### Limitations of our Approach
-For the sake of time, we had to make a few concessions to simplify our project, but there are many interesting extensions here that we would've liked to pursue.
 
-- Detecting runner direction - Our current approach to predicting the runner's trajectory involves guessing their direction by extrapolating from the history of their past locations, but our approach does not attempt to estimate or use information about the current orientation of the runner. We had discussed a method for doing this that would involve a few smaller AR tags, one on each side of the runner, as well as prediction algorithms that would take advantage of this data, but it quickly grew to beyond the scope of what we could tackle within the timeline.
 
-TODO
+
